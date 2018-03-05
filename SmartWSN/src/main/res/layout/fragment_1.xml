@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical">
+
+    <com.dd.CircularProgressButton
+        android:id="@+id/bt_NFC"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBaseline="@+id/bt_QR"
+        android:layout_alignBottom="@+id/bt_QR"
+        android:layout_toStartOf="@+id/bt_QR"
+        android:textColor="@color/cpb_white"
+        android:textSize="18sp"
+        android:layout_margin="7dp"
+        app:cpb_textIdle="NFC"
+        app:cpb_cornerRadius="10dp"
+        app:cpb_colorIndicator="@color/blue"
+        app:cpb_selectorIdle="@drawable/idle_state_selector"/>
+
+
+    <com.dd.CircularProgressButton
+        android:id="@+id/bt_QR"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="30dp"
+        android:textColor="@color/cpb_white"
+        android:textSize="18sp"
+        app:cpb_textIdle="二维码"
+        app:cpb_cornerRadius="10dp"
+        app:cpb_colorIndicator="@color/blue"
+        app:cpb_selectorIdle="@drawable/idle_state_selector"/>
+
+    <com.dd.CircularProgressButton
+        android:id="@+id/bt_BLE"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBaseline="@+id/bt_QR"
+        android:layout_toEndOf="@+id/bt_QR"
+        android:textColor="@color/cpb_white"
+        android:textSize="18sp"
+        android:layout_margin="7dp"
+        app:cpb_textIdle="蓝牙扫描"
+        app:cpb_cornerRadius="10dp"
+        app:cpb_colorIndicator="@color/blue"
+        app:cpb_selectorIdle="@drawable/idle_state_selector" />
+
+    <TextView
+        android:id="@+id/textView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentStart="true"
+        android:layout_below="@+id/bt_NFC"
+        android:layout_marginTop="38dp"
+        android:text="已识别设备:"
+        android:textSize="20dp" />
+
+    <TextView
+        android:id="@+id/textView5"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/device_list"
+        android:layout_alignParentEnd="true"
+        android:layout_marginRight="18dp"
+        android:text="状态"
+        android:textSize="20dp" />
+
+    <ListView
+        android:id="@+id/device_list"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_alignParentStart="true"
+        android:layout_below="@+id/textView" />
+
+</RelativeLayout>

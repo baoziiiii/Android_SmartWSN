@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/QR"
+        android:title="扫描二维码"
+        app:showAsAction="never"/>
+    <item
+        android:id="@+id/NFC"
+        android:title="NFC"
+        app:showAsAction="never"/>
+    <item
+        android:id="@+id/Bluetooth"
+        android:title="蓝牙连接"
+        app:showAsAction="never"/>
+    <item
+        android:id="@+id/WriteNFC"
+        android:title="WriteNFC" />
+</menu>

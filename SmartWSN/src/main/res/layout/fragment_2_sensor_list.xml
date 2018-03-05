@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/group"
+    android:layout_width="match_parent"
+    android:layout_height="50dp"
+    android:background="@color/bluedark">
+
+    <ImageView
+        android:id="@+id/dropdownmenu"
+        android:layout_width="30dp"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="13dp"
+        android:backgroundTint="@android:color/darker_gray"
+        app:srcCompat="@drawable/arrowdown"
+        />
+
+    <TextView
+        android:id="@+id/fragment_2_expandable_list_groupnames"
+        android:layout_width="wrap_content"
+        android:layout_height="50dp"
+        android:layout_marginLeft="28dp"
+        android:layout_toRightOf="@id/dropdownmenu"
+        android:gravity="center_vertical"
+        android:textAppearance="@style/TextAppearance.AppCompat.Light.Widget.PopupMenu.Large"
+        android:textColor="@android:color/background_light" />
+
+    <TextView
+        android:id="@+id/fragment_2_expandable_list_selectedsensor"
+        android:layout_width="wrap_content"
+        android:layout_height="50dp"
+        android:layout_toRightOf="@id/fragment_2_expandable_list_groupnames"
+        android:text="@string/selectedsensor"
+        android:gravity="center_vertical"
+        android:textAppearance="@style/TextAppearance.AppCompat.Light.Widget.PopupMenu.Large"
+        android:textColor="@android:color/background_light" />
+</RelativeLayout>
