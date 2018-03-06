@@ -10,7 +10,7 @@ import com.example.materialdesign.R;
 import drawthink.expandablerecyclerview.holder.BaseViewHolder;
 
 /**
- * Created by MSI on 2018/3/1.
+ * Created by B on 2018/3/1.
  */
 
 public class SensorsViewHolder extends BaseViewHolder {

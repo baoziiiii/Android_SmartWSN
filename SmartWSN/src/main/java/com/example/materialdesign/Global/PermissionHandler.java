@@ -29,6 +29,11 @@ public class PermissionHandler {
     }
 
 
+    /**
+     * 支持同时检查和申请多条权限(Fragment)
+     * @param permissions 多个权限
+     * @Return Boolean  所有权限通过才返回true，否则返回false
+     */
     public static Boolean checkPermission(Fragment fragment, final String[] permissions, int requestCode) {
         for (String permission : permissions) {
             if (ContextCompat.checkSelfPermission(fragment.getActivity() ,permission) != PackageManager.PERMISSION_GRANTED) {

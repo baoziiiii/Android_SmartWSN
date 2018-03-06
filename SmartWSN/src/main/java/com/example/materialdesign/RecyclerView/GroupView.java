@@ -1,7 +1,7 @@
 package com.example.materialdesign.RecyclerView;
 
 /**
- * Created by MSI on 2018/3/1.
+ * Created by B on 2018/3/1.
  */
 
 public class GroupView {

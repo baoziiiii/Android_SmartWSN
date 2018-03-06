@@ -7,7 +7,9 @@ import com.beardedhen.androidbootstrap.TypefaceProvider;
 /**
  * Created by B on 2018/2/18.
  */
-
+/**
+ *  全局上下文
+ */
 public class MyApplication extends Application {
     private static MyApplication instance;
 

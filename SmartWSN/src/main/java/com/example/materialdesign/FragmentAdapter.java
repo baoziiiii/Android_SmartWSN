@@ -29,8 +29,8 @@ public class FragmentAdapter extends FragmentPagerAdapter {
         return fragmentList.size();
     }
 
-    @Override
-    public CharSequence getPageTitle(int position) {
-        return MainActivity.tabname[position];
-    }
+//    @Override
+//    public CharSequence getPageTitle(int position) {
+//        return MainActivity.tabname[position];
+//    }
 }

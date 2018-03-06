@@ -48,7 +48,6 @@ public class Fragment_Control_Temperature extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_3_controltemperature, null);
-
         ViewGroup temperature_graph_parent = view.findViewById(R.id.fragment_3_controltemperature_RL_1);
         graph_groupview = inflater.inflate(R.layout.graph_groupview, temperature_graph_parent);
         chart_temperature = view.findViewById(R.id.linechart);
@@ -68,7 +67,8 @@ public class Fragment_Control_Temperature extends Fragment {
                 try {
                     TemperatureControl temperatureControl = TemperatureControl.getTemperatureControl();
                     Float desiredTemp = Float.parseFloat(settemperature_textview.getText().toString());
-                    temperatureControl.setTemperature(desiredTemp);
+                    temperatureControl.setTemperature
+                            (desiredTemp);
                     BLECommunication.controlSensor(temperatureControl);
                     yLimitLine = new LimitLine(desiredTemp,"控温线:"+desiredTemp+"°C");
                     yLimitLine.setLineColor(Color.RED);
@@ -77,7 +77,7 @@ public class Fragment_Control_Temperature extends Fragment {
                     yLimitLine.setTextSize(20f);
                     // 获得左侧侧坐标轴
                     YAxis leftAxis = chart_temperature.getAxisLeft();
-                    Float yMin=SensorData.getSendorDataMin(SENSOR_TEMPERATURE);
+                    Float yMin=Float.parseFloat(SensorData.getSendorDataMin(SENSOR_TEMPERATURE));
                     if(desiredTemp<yMin) {
                         chart_temperature.zoom(1.0f, 1.0f, 0f, 0f);  //自定义缩放(float scaleX, float scaleY, float x, float y)X缩放倍数，Y缩放倍数，x坐标，y坐标。1f是原大小
                     }
@@ -89,7 +89,7 @@ public class Fragment_Control_Temperature extends Fragment {
             }
         });
 
-
+        //初始化图表按键
         CircularProgressButton bt_fitAll = temperature_graph_parent.findViewById(R.id.fitAll);
         bt_fitAll.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -103,7 +103,6 @@ public class Fragment_Control_Temperature extends Fragment {
         bt_clearAll.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-//                bt_start.setEnabled(true);
                 SensorData.getSensorData().clearData(SENSOR_HUMIDTY);
                 SensorData.getSensorData().clearData(SENSOR_TEMPERATURE);
                 tempLineData.notifyDataChanged();
@@ -118,6 +117,7 @@ public class Fragment_Control_Temperature extends Fragment {
             }
         });
 
+        //初始化风扇图表
         setfanspeed_textview = view.findViewById(R.id.fanspeed);
         setFanSpeed = view.findViewById(R.id.setfanspeed);
         setFanSpeed.setOnClickListener(new View.OnClickListener() {

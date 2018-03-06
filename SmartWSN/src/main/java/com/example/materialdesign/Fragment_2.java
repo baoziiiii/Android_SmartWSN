@@ -30,6 +30,10 @@ import drawthink.expandablerecyclerview.listener.OnRecyclerViewListener;
  * Created by B on 2018/2/4.
  */
 
+/**
+ *  传感器数据监测页面
+ */
+
 public class Fragment_2 extends Fragment {
 
     private String chartName;
@@ -40,7 +44,6 @@ public class Fragment_2 extends Fragment {
     private FragmentTransaction fragmentTransaction;
     private FragmentManager fragmentManager;
     private Bundle bundle = new Bundle();
-    public SensorData sensorData = SensorData.getSensorData();
 
     private List<RecyclerViewData> mDatas;
     private RecyclerView mRecyclerview;
@@ -56,6 +59,9 @@ public class Fragment_2 extends Fragment {
         initSensorsList();
     }
 
+    /**
+     * 初始化传感器列表
+     */
     private void initSensorsList() {
         childViewList = new ArrayList<>();
         List<String> sensorNameList = LineChartFactory.getChartNameList();
@@ -71,16 +77,21 @@ public class Fragment_2 extends Fragment {
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_2, null);
 
+        /**
+         * 初始化图表页
+         */
         fragmentManager = getFragmentManager();
         fragmentTransaction = fragmentManager.beginTransaction();
         fragment_monitor = new Fragment_Monitor();
         chartID = LineChartFactory.CHART_TEMPERATURE_AND_HUMIDITY;
         bundle.putInt(LineChartFactory.CHART, chartID);
-
         fragment_monitor.setArguments(bundle);
         fragmentTransaction.replace(R.id.graph_relativelayout, fragment_monitor);
         fragmentTransaction.commit();
 
+        /**
+         * 顶部菜单初始化
+         */
         linearLayoutManager = new LinearLayoutManager(getActivity());
         linearLayoutManager.setOrientation(LinearLayoutManager.VERTICAL);
         mRecyclerview = view.findViewById(R.id.fragment_2_recyclerview);
@@ -90,6 +101,9 @@ public class Fragment_2 extends Fragment {
         mRecyclerview.setAdapter(adapter);
         adapter.notifyDataSetChanged();
 
+        /**
+         * 顶部菜单选择事件
+         */
         adapter.setOnItemClickListener(new OnRecyclerViewListener.OnItemClickListener() {
             @Override
             public void onGroupItemClick(int position, int groupPosition, View view) {
@@ -125,6 +139,9 @@ public class Fragment_2 extends Fragment {
         return view;
     }
 
+    /**
+     * 开启新图表
+     */
     private void startNewGraph() {
         int newChart = LineChartFactory.findChartIDByName(chartName);
         if (newChart == chartID)

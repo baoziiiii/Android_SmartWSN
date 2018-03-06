@@ -52,6 +52,11 @@ import static com.example.materialdesign.Sensor.SensorData.SENSOR_TEMPERATURE;
  * Created by B on 2018/2/20.
  */
 
+/**
+ *  图表工厂类。
+ *  ->搭建SensorData中已注册的所有传感器与图表类MPAndroidChart的桥梁。
+ *  ->方便图表的复用，以及不同传感器图表参数的设置。
+ */
 public class LineChartFactory {
 
     public final static String CHART="KEY_CHART";
@@ -61,7 +66,8 @@ public class LineChartFactory {
     public final static int CHART_LIGHT = 3;
     public final static int CHART_FANSPEED = 4;
     public final static int CHART_TEMPERATURE_CONTROL=5;
-    //TODO:在此添加新图表
+    //TODO:在此添加新图表ID
+
     private int chartID;
 
     private Context context;
@@ -78,6 +84,7 @@ public class LineChartFactory {
     private static final List<String> chartNameList=new ArrayList<>();
     private static final List<SensorChartMap> sensorChartMapArrayList= new ArrayList<>();
     private static final List<ChartSensorMap> chartSensorMapArrayList=new ArrayList<>();
+
     static class SensorChartMap{
         Integer sensorID;
         Integer[] chartID;
@@ -96,6 +103,7 @@ public class LineChartFactory {
     }
 
     static {
+        //表名-ID映射
         ChartNameMap.put("温湿度监测",CHART_TEMPERATURE_AND_HUMIDITY);
         ChartNameMap.put("CO2监测",CHART_CO2);
         ChartNameMap.put("光强监测",CHART_LIGHT);
@@ -106,26 +114,30 @@ public class LineChartFactory {
             chartNameList.add(entry.getKey());
         }
 
+        //传感器ID-所在图表映射 （1对多）
         sensorChartMapArrayList.add(new SensorChartMap(SENSOR_TEMPERATURE,new Integer[]{CHART_TEMPERATURE_AND_HUMIDITY,CHART_TEMPERATURE_CONTROL}));
         sensorChartMapArrayList.add(new SensorChartMap(SENSOR_HUMIDTY,new Integer[]{CHART_TEMPERATURE_AND_HUMIDITY}));
         sensorChartMapArrayList.add(new SensorChartMap(SENSOR_CO2,new Integer[]{CHART_CO2}));
         sensorChartMapArrayList.add(new SensorChartMap(SENSOR_LIGHT,new Integer[]{CHART_LIGHT}));
         sensorChartMapArrayList.add(new SensorChartMap(SENSOR_FAN,new Integer[]{CHART_FANSPEED}));
 
-
+        //图表ID-包含的传感器ID （1对多）
         chartSensorMapArrayList.add(new ChartSensorMap(CHART_TEMPERATURE_AND_HUMIDITY,new Integer[]{SENSOR_TEMPERATURE,SENSOR_HUMIDTY}));
         chartSensorMapArrayList.add(new ChartSensorMap(CHART_CO2,new Integer[]{SENSOR_CO2}));
         chartSensorMapArrayList.add(new ChartSensorMap(CHART_LIGHT,new Integer[]{SENSOR_LIGHT}));
         chartSensorMapArrayList.add(new ChartSensorMap(CHART_FANSPEED,new Integer[]{SENSOR_FAN}));
         chartSensorMapArrayList.add(new ChartSensorMap(CHART_TEMPERATURE_CONTROL,new Integer[]{SENSOR_TEMPERATURE}));
-
         //TODO:在此建立传感器数据与图表关系
+
+        //图表工厂注册。
         ChartLineChartFactoryMap.put(CHART_TEMPERATURE_AND_HUMIDITY,null);
         ChartLineChartFactoryMap.put(CHART_CO2,null);
         ChartLineChartFactoryMap.put(CHART_LIGHT,null);
         ChartLineChartFactoryMap.put(CHART_FANSPEED,null);
         ChartLineChartFactoryMap.put(CHART_TEMPERATURE_CONTROL,null);
         //TODO:图表复用
+
+        //传感器ID-图表颜色映射
         SensorColorMap.put(SENSOR_TEMPERATURE,Color.parseColor("#CB1417"));
         SensorColorMap.put(SENSOR_HUMIDTY,Color.parseColor("#40E0D0"));
         SensorColorMap.put(SENSOR_CO2,Color.parseColor("#F4D313"));
@@ -157,6 +169,9 @@ public class LineChartFactory {
         LineChartFactoryInit();
     }
 
+    /**
+     *  图表通用参数初始化
+     */
     private void LineChartFactoryInit(){
         lineData = new LineData(lineDataSets);
         lineData.setDrawValues(false);
@@ -172,10 +187,16 @@ public class LineChartFactory {
         iMarkerProcessor(chartID);
     }
 
+    /**
+     *  通过图表ID查询获取图表工厂对象
+     */
     public static LineChartFactory getLineChartFactory(Integer chartID){
         return ChartLineChartFactoryMap.get(chartID);
     }
 
+    /**
+     *  通过多个图表ID查询获取多个图表工厂对象
+     */
     public static List<LineChartFactory> getLineChartFactories(List<Integer[]> chartIDsList){
         List<LineChartFactory> lineChartFactories=new ArrayList<>();
         for (int i = 0; i < chartIDsList.size(); i++) {
@@ -193,10 +214,16 @@ public class LineChartFactory {
 //        return CHART;
 //    }
 
+    /**
+     *  通过表名查询图表ID
+     */
     public static Integer findChartIDByName(String name){
         return ChartNameMap.get(name);
     }
 
+    /**
+     *  查询多个传感器ID分别所在的一个或多个图表。
+     */
     public static List<Integer[]> findChartIDs(List<Integer> sensorIDs){
         List<Integer[]> allChartsWhereTheseSensorsExists=new ArrayList<>();
         for (int i = 0; i < sensorIDs.size(); i++) {
@@ -209,23 +236,9 @@ public class LineChartFactory {
         return allChartsWhereTheseSensorsExists;
     }
 
-    public LineChart getLineChart(){
-        return lineChart;
-    }
-
-    public static List<String> getChartNameList() {
-        List<String> nameList = new ArrayList<>();
-        for (int i = 0; i < chartNameList.size(); i++) {
-            nameList.add(chartNameList.get(i));
-        }
-        return nameList;
-    }
-
-
-    public LineData getLineData() {
-        return lineData;
-    }
-
+    /**
+     *  查询指定图表中包含的所有传感器ID
+     */
     public Integer[] getSensorListInChart(int chartID){
         Integer[] sensorIDs=null;
         for (int i = 0; i < chartSensorMapArrayList.size(); i++) {
@@ -236,7 +249,34 @@ public class LineChartFactory {
         return sensorIDs;
     }
 
+    /**
+     *  获取当前图表工厂的图表数据。
+     */
+    public LineData getLineData() {
+        return lineData;
+    }
 
+    /**
+     *  获取当前图表工厂的图表类。
+     */
+    public LineChart getLineChart(){
+        return lineChart;
+    }
+
+    /**
+     *  获取所有图表的名称列表。
+     */
+    public static List<String> getChartNameList() {
+        List<String> nameList = new ArrayList<>();
+        for (int i = 0; i < chartNameList.size(); i++) {
+            nameList.add(chartNameList.get(i));
+        }
+        return nameList;
+    }
+
+    /**
+     *  右下角描述初始化
+     */
     private Description descriptionProcessor(int chartID) {
         Description description=lineChart.getDescription();
         if (CHART_TEMPERATURE_AND_HUMIDITY == chartID) {
@@ -246,6 +286,9 @@ public class LineChartFactory {
         return description;
     }
 
+    /**
+     *  x轴初始化
+     */
     private XAxis xAxisProcessor(int chartID) {
         XAxis xAxis = lineChart.getXAxis();
         if (true) {
@@ -257,6 +300,9 @@ public class LineChartFactory {
         return xAxis;
     }
 
+    /**
+     *  y轴左初始化
+     */
     private YAxis leftYAxisProcessor(int chartID) {
         YAxis axisLeft = lineChart.getAxisLeft();
         if (CHART_TEMPERATURE_AND_HUMIDITY == chartID||CHART_TEMPERATURE_CONTROL==chartID) {
@@ -275,6 +321,9 @@ public class LineChartFactory {
         return axisLeft;
     }
 
+    /**
+     *  y轴右初始化
+     */
     private YAxis rightYAxisProcessor(int chartID) {
         YAxis axisRight = lineChart.getAxisRight();
         if (CHART_TEMPERATURE_AND_HUMIDITY == chartID) {
@@ -300,6 +349,9 @@ public class LineChartFactory {
         return axisRight;
     }
 
+    /**
+     *  图例初始化
+     */
     private Legend legendProcessr(int CHART){
         Legend legend = lineChart.getLegend();
         if(CHART_TEMPERATURE_AND_HUMIDITY==CHART||CHART_TEMPERATURE_CONTROL==CHART) {
@@ -314,6 +366,11 @@ public class LineChartFactory {
         return legend;
     }
 
+    /**
+     *  数据集整合
+     *  @param sensorID  传感器ID
+     *  @param lineDataSet 图表数据集
+     */
     private LineDataSet lineDataSetProcessor(Integer sensorID, LineDataSet lineDataSet) {
         /**预设*/
         lineDataSet.setHighlightEnabled(true);
@@ -361,6 +418,9 @@ public class LineChartFactory {
         return lineDataSet;
     }
 
+    /**
+     *   视图初始化
+     */
     public LineChart setViewPort() {
         int left = (int) (lineData.getXMax() - 12);
         if (left < 0) left = 0;
@@ -371,6 +431,9 @@ public class LineChartFactory {
         return lineChart;
     }
 
+    /**
+     *   更新图表。
+     */
     public LineChart updateLineChart(){
         lineData.notifyDataChanged();
         lineChart.notifyDataSetChanged();
@@ -378,8 +441,10 @@ public class LineChartFactory {
        return lineChart;
     }
 
+    /**
+     *   弹出信息框初始化
+     */
     private IMarker iMarkerProcessor(int chartID){
-
         IMarker marker =null;
         if(CHART_TEMPERATURE_AND_HUMIDITY==chartID||CHART_TEMPERATURE_CONTROL==chartID){
             marker=new MyMarkerView(context, R.layout.graph_groupview_markview);
@@ -402,12 +467,9 @@ public class LineChartFactory {
 
         public MyMarkerView(Context context, int layoutResource) {
             super(context, layoutResource);
-            // find your layout components
             tvContent = (TextView) findViewById(R.id.tvContent);
         }
 
-        // callbacks everytime the MarkerView is redrawn, can be used to update the
-        // content (user-interface)
         @Override
         public void refreshContent(Entry e, Highlight highlight) {
             LineDataSet lineDataSet = (LineDataSet) lineDataSets.get(highlight.getDataSetIndex());
@@ -425,24 +487,25 @@ public class LineChartFactory {
                 text = "转速:";
             }
                 //TODO:在此添加新MarkerView
-
             tvContent.setText(text + lineDataSet.getValueFormatter().getFormattedValue(e.getY(), null, 0, null));
-            // this will perform necessary layouting
             super.refreshContent(e, highlight);
         }
 
         private MPPointF mOffset;
 
+        //MarkerView的位置
         @Override
         public MPPointF getOffset() {
             if (mOffset == null) {
-                // center the marker horizontally and vertically
                 mOffset = new MPPointF(-(getWidth() / 2), -getHeight());
             }
             return mOffset;
         }
     }
 
+    /**
+     *   数据格式化类。
+     */
     public static class MyValueFormatter implements IValueFormatter {
 
         private DecimalFormat mFormat;
@@ -506,7 +569,11 @@ public class LineChartFactory {
 
     }
 
+    /**
+     *   x轴信息格式化类。
+     */
     public static class MyXAxisValueFormatter implements IAxisValueFormatter {
+
         private  SimpleDateFormat simpleDateFormat;
         private int formatter;
 
@@ -525,6 +592,9 @@ public class LineChartFactory {
         }
     }
 
+    /**
+     *   y轴信息格式化类。
+     */
     public static class MyYAxisValueFormatter implements IAxisValueFormatter {
 
         private DecimalFormat mFormat;

@@ -26,6 +26,9 @@ import java.util.Arrays;
  * Created by B on 2018/2/11.
  */
 
+/**
+ *  NFC读取页面
+ */
 public class ReadTextActivity extends BaseNfcActivity {
 
     public static final String EXTRA_NFCRESULT="NFCResult";
@@ -50,7 +53,7 @@ public class ReadTextActivity extends BaseNfcActivity {
             Ndef ndef = Ndef.get(detectedTag);
             mTagText = ndef.getType() + "\nmaxsize:" + ndef.getMaxSize() + "bytes\n\n";
             readNfcTag(intent);
-
+            //TODO:自定义密码头。
             if(textRecord.startsWith("G&QUIWHI|")){
                 textRecord=textRecord.replace("G&QUIWHI|","");
                 BLEDeviceManager.addBLEDevice(new BLEDeviceInfo(null,textRecord));

@@ -23,11 +23,15 @@ import static com.example.materialdesign.Global.MyLog.TAG;
 import static com.example.materialdesign.Global.MyLog.e;
 
 /**
- * public static final int FORMAT_TEMPERATURE = 0;
- * public static final int FORMAT_HUMIDITY = 1;
- * Created by MSI on 2018/2/3.
+ * Created by B on 2018/2/3.
  */
 
+/**
+ * SensorData:传感器数据类
+ * ->接收来自蓝牙的传感器数据。
+ * ->以链表和内部类形式缓存所有传感器的数据，包括传感器的ID、名称和所有测量值。
+ * ->数据的整合处理，方便图表调用。
+ */
 public class SensorData {
     public final static String ACTION_NOTIFY_FRAGMENTS = SensorData.class.getName() + "ACTION_NOTIFY_FRAGMENTS";
 
@@ -44,14 +48,35 @@ public class SensorData {
     public final static int SENSOR_FAN = 4;
     public final static int SENSOR_PUMP = 5;
 
-    public final static Map<String, Integer> sensorNameListMap = new HashMap<>();
+    /**
+     * 传感器名称表。
+     */
+    public final static Map<Integer, String> sensorNameListMap = new HashMap<>();
     public final static List<String> sensorNameList = new ArrayList<>();
-    private static Map<Integer, Sensor> sensorMap = new HashMap<>();
 
+    static {
+        sensorNameListMap.put(SENSOR_TEMPERATURE, "温度传感器");
+        sensorNameListMap.put(SENSOR_HUMIDTY, "湿度传感器");
+        sensorNameListMap.put(SENSOR_CO2, "CO2传感器");
+        sensorNameListMap.put(SENSOR_LIGHT, "光强传感器");
+        sensorNameListMap.put(SENSOR_FAN, "风扇转速");
+        Set<Map.Entry<Integer, String>> entrySet = sensorNameListMap.entrySet();
+        for (Map.Entry<Integer, String> entry : entrySet) {
+            sensorNameList.add(entry.getValue());
+        }
+    }
+
+
+    /**
+     * Sensor:传感器类
+     * -> 传感器ID、数据集、统计值等等。
+     */
+    private static Map<Integer, Sensor> sensorMap = new HashMap<>();
 
     private class Sensor {
         Integer ID;
-        LineDataSet lineDataSet;
+        String Name;
+        LineDataSet lineDataSet; //向图表输出的数据集。
         Float yMax = Float.MIN_VALUE;
         Float yMin = Float.MAX_VALUE;
         Float yAvr = 0f;
@@ -63,6 +88,9 @@ public class SensorData {
             this.lineDataSet = lineDataSet;
         }
 
+        /**
+         * 添加新数据。
+         */
         public Boolean updateData(Entry entry) {
             Float y = entry.getY();
             count++;
@@ -78,37 +106,35 @@ public class SensorData {
             return true;
         }
 
+        /**
+         * 清空所有数据。
+         */
         public Boolean clearData() {
             while (lineDataSet.removeLast()) ;
             yAvr = 0f;
             ySum = 0f;
-            count=0;
+            count = 0;
             yMax = Float.MIN_VALUE;
             yMin = Float.MAX_VALUE;
             return true;
         }
     }
 
-    static {
-        sensorNameListMap.put("温度传感器", SENSOR_TEMPERATURE);
-        sensorNameListMap.put("湿度传感器", SENSOR_HUMIDTY);
-        sensorNameListMap.put("CO2传感器", SENSOR_CO2);
-        sensorNameListMap.put("光强传感器", SENSOR_LIGHT);
-        sensorNameListMap.put("风扇转速", SENSOR_FAN);
-        Set<Map.Entry<String, Integer>> entrySet = sensorNameListMap.entrySet();
-        for (Map.Entry<String, Integer> entry : entrySet) {
-            sensorNameList.add(entry.getKey());
-        }
-    }
-
+    /**
+     * 单例。
+     */
     private static SensorData sensorData = new SensorData();
 
-    private SensorData() {}
+    private SensorData() {
+    }
 
     public static SensorData getSensorData() {
         return sensorData;
     }
 
+    /**
+     * 加载传感器
+     */
     public Boolean enableSensor(Integer ID) {
         if (sensorMap.containsKey(ID)) {
             return false;
@@ -118,92 +144,14 @@ public class SensorData {
                 return false;
             LineDataSet lineDataSet = new LineDataSet(new ArrayList<Entry>(), name);
             lineDataSet.setDrawValues(false);
-
             sensorMap.put(ID, new Sensor(ID, lineDataSet));
             return true;
         }
     }
 
-    public static Boolean updateData(Integer ID, Entry entry) {
-        Sensor sensor = sensorMap.get(ID);
-        if (sensor == null) {
-            MyLog.e(TAG, "Wrong sensorID received");
-            return null;
-        }
-        sensor.updateData(entry);
-        return true;
-
-    }
-
-    public Boolean clearData(Integer ID) {
-        Sensor sensor = sensorMap.get(ID);
-        sensor.clearData();
-        sensor.lineDataSet.setDrawValues(false);
-        return true;
-    }
-
-
-    public LineDataSet getLineDataSet(Integer ID) {
-        return sensorMap.get(ID).lineDataSet;
-    }
-
-    public Integer getSensorID(String name) {
-        return sensorNameListMap.get(name);
-    }
-
-    public List<String> getSensorNameList() {
-        List<String> nameList = new ArrayList<>();
-        for (int i = 0; i < sensorNameList.size(); i++) {
-            nameList.add(sensorNameList.get(i));
-        }
-        return nameList;
-    }
-
-    public String getSensorName(Integer ID) {
-        Set<Map.Entry<String, Integer>> entrySet = sensorNameListMap.entrySet();
-        Iterator<Map.Entry<String, Integer>> iterator = entrySet.iterator();  //Set有迭代器，迭代输出
-        while (iterator.hasNext()) {
-            Map.Entry<String, Integer> entry = iterator.next();
-            if (entry.getValue().equals(ID)) {
-                return entry.getKey();
-            }
-        }
-        return null;
-    }
-
-    public Integer findLineDataSet(LineDataSet lineDataSet) {
-        Set<Map.Entry<Integer, Sensor>> entrySet = sensorMap.entrySet();
-        Iterator<Map.Entry<Integer, Sensor>> iterator = entrySet.iterator();  //Set有迭代器，迭代输出
-        while (iterator.hasNext()) {
-            Map.Entry<Integer, Sensor> entry = iterator.next();
-            if (entry.getValue().lineDataSet.equals(lineDataSet)) {
-                return entry.getKey();
-            }
-        }
-        return null;
-    }
-
-
-    public List<Entry> getSensorDataEntryList(Integer ID) {
-        LineDataSet lineDataSet = sensorMap.get(ID).lineDataSet;
-        if (lineDataSet == null)
-            return null;
-        List<Entry> entryList = lineDataSet.getValues();
-        return entryList;
-    }
-
-    public static Float getSendorDataMax(Integer ID) {
-        return sensorMap.get(ID).yMax;
-    }
-
-    public static Float getSendorDataMin(Integer ID) {
-        return sensorMap.get(ID).yMin;
-    }
-
-    public static Float getSensorDataAvr(Integer ID) {
-        return sensorMap.get(ID).yAvr;
-    }
-
+    /**
+     *  从经过蓝牙接收第一级处理后的传感器数据串中,解析出其中包含的所有传感器数据。（一条传感器数据传输包含多个传感器数据和对应的ID）
+     */
     public static void updateDataToList(String rawString) {
         String[] group = rawString.split("\\|");
         for (String record : group) {
@@ -223,6 +171,107 @@ public class SensorData {
         }
     }
 
+    /**
+     * 更新指定传感器的数据。
+     */
+    public static Boolean updateData(Integer ID, Entry entry) {
+        Sensor sensor = sensorMap.get(ID);
+        if (sensor == null) {
+            MyLog.e(TAG, "Wrong sensorID received");
+            return null;
+        }
+        sensor.updateData(entry);
+        return true;
+    }
+
+    /**
+     * 清空指定传感器的数据。
+     */
+    public Boolean clearData(Integer ID) {
+        Sensor sensor = sensorMap.get(ID);
+        sensor.clearData();
+        sensor.lineDataSet.setDrawValues(false);
+        return true;
+    }
+
+    /**
+     * 输出指定传感器的图表数据集。
+     */
+    public LineDataSet getLineDataSet(Integer ID) {
+        return sensorMap.get(ID).lineDataSet;
+    }
+
+    /**
+     * 输出传感器名称列表的拷贝。
+     */
+    public List<String> getSensorNameList() {
+        List<String> nameList = new ArrayList<>();
+        for (int i = 0; i < sensorNameList.size(); i++) {
+            nameList.add(sensorNameList.get(i));
+        }
+        return nameList;
+    }
+
+    /**
+     * 查询指定ID的传感器名称。
+     */
+    public String getSensorName(Integer ID) {
+        return sensorNameList.get(ID);
+    }
+
+    /**
+     * 查询指定数据集的所属传感器ID。
+     */
+    public Integer findLineDataSet(LineDataSet lineDataSet) {
+        Set<Map.Entry<Integer, Sensor>> entrySet = sensorMap.entrySet();
+        Iterator<Map.Entry<Integer, Sensor>> iterator = entrySet.iterator();  //Set有迭代器，迭代输出
+        while (iterator.hasNext()) {
+            Map.Entry<Integer, Sensor> entry = iterator.next();
+            if (entry.getValue().lineDataSet.equals(lineDataSet)) {
+                return entry.getKey();
+            }
+        }
+        return null;
+    }
+
+    /**
+     * 输出指定传感器的数据集（链表形式）。
+     */
+    public List<Entry> getSensorDataEntryList(Integer ID) {
+        LineDataSet lineDataSet = sensorMap.get(ID).lineDataSet;
+        if (lineDataSet == null)
+            return null;
+        List<Entry> entryList = lineDataSet.getValues();
+        return entryList;
+    }
+
+    /**
+     * 输出指定传感器的数据统计值。
+     */
+    public static String getSendorDataMax(Integer ID) {
+        Float max = sensorMap.get(ID).yMax;
+        if (max == Float.MAX_VALUE) {
+            return "";
+        } else
+            return sensorMap.get(ID).yMax.toString();
+    }
+
+    public static String getSendorDataMin(Integer ID) {
+        Float min = sensorMap.get(ID).yMin;
+        if (min == Float.MIN_VALUE) {
+            return "";
+        } else
+            return sensorMap.get(ID).yMin.toString();
+    }
+
+    public static Float getSensorDataAvr(Integer ID) {
+        return sensorMap.get(ID).yAvr;
+    }
+
+
+    /**
+     * 通知图表更新。
+     */
     public static void notifyLineChart(List<LineChartFactory> lineChartFactories) {
         for (int i = 0; i < lineChartFactories.size(); i++) {
             LineChartFactory lineChartFactory = lineChartFactories.get(i);

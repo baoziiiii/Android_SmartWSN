@@ -36,16 +36,18 @@ import java.util.Map;
  * Created by B on 2018/2/15.
  */
 
-
+/**
+ *  BLE蓝牙扫描页面。
+ *  ->负责进行周边蓝牙设备的扫描。
+ *  ->获取用户想要配对的蓝牙设备并返回主页面。
+ */
 public class BLEActivity extends AppCompatActivity {
-
 
     private BluetoothAdapter bluetoothAdapter;
     private BluetoothManager bluetoothManager;
 
     private SimpleAdapter leDeviceListAdapter;
     private List<Map<String,String>> deviceScanList = new ArrayList<>();
-    private DeviceListAdapter deviceListAdapter;
     private CircularProgressButton bt_ble_scan;
 
     @Override
@@ -55,7 +57,7 @@ public class BLEActivity extends AppCompatActivity {
         bluetoothManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
         bluetoothAdapter = bluetoothManager.getAdapter();
         // Ensures Bluetooth is available on the device and it is enabled. If not,
-// displays a dialog requesting user permission to enable Bluetooth.
+        // displays a dialog requesting user permission to enable Bluetooth.
         if (bluetoothAdapter == null || !bluetoothAdapter.isEnabled()) {
             Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
             startActivityForResult(enableBtIntent, 0);
@@ -78,13 +80,12 @@ public class BLEActivity extends AppCompatActivity {
             }
         }
 
-
+        //初始化扫描列表。
         leDeviceListAdapter = new SimpleAdapter(this, deviceScanList, R.layout.activity_ble_scan_list_item,
                 new String[]{BLEDeviceManager.DEVICE_NAME, BLEDeviceManager.DEVICE_ADDRESS}, new int[]{R.id.device_scan_name, R.id.device_scan_address});
 //        deviceListAdapter = new DeviceListAdapter(this, deviceScanList);
         ListView listView = findViewById(R.id.blelist);
         listView.setAdapter(leDeviceListAdapter);
-
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -102,8 +103,8 @@ public class BLEActivity extends AppCompatActivity {
             }
         });
 
+        //初始化扫描按钮。
         bt_ble_scan = findViewById(R.id.bt_ble_scan);
-
         bt_ble_scan.setIndeterminateProgressMode(true);
         bt_ble_scan.setProgress(0);
         bt_ble_scan.setOnClickListener(new View.OnClickListener() {
@@ -122,12 +123,11 @@ public class BLEActivity extends AppCompatActivity {
     private boolean mScanning;
     private Handler mHandler = new Handler();
 
-    // Stops scanning after 10 seconds.
+    // 蓝牙设备扫描定时10秒。
     private static final long SCAN_PERIOD = 10000;
-
     private void scanLeDevice(final boolean enable) {
         if (enable) {
-            // Stops scanning after a pre-defined scan period.
+            //10秒后停止扫描。
             mHandler.postDelayed(new Runnable() {
                 @Override
                 public void run() {
@@ -148,7 +148,7 @@ public class BLEActivity extends AppCompatActivity {
             bluetoothAdapter.stopLeScan(mLeScanCallback);
         }
     }
-
+    //扫描到设备后的回调方法，获取设备相关信息。
     private BluetoothAdapter.LeScanCallback mLeScanCallback =
             new BluetoothAdapter.LeScanCallback() {
                 @Override

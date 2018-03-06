@@ -13,9 +13,12 @@ import drawthink.expandablerecyclerview.adapter.BaseRecyclerViewAdapter;
 import drawthink.expandablerecyclerview.bean.RecyclerViewData;
 
 /**
- * Created by MSI on 2018/3/1.
+ * Created by B on 2018/3/1.
  */
 
+/**
+ * Fragment2顶部的传感器列表菜单。
+ */
 public class SensorsAdapter extends BaseRecyclerViewAdapter<GroupView,ChildView,SensorsViewHolder> {
 
     private Context ctx;

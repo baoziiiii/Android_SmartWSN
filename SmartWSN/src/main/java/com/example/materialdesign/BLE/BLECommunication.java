@@ -3,11 +3,11 @@ package com.example.materialdesign.BLE;
 import android.content.SharedPreferences;
 
 import com.example.materialdesign.Global.ByteArrayUtils;
-import com.example.materialdesign.Global.LocalDeviceInfo;
 import com.example.materialdesign.Global.MyLog;
 import com.example.materialdesign.Graph.LineChartFactory;
 import com.example.materialdesign.Sensor.SensorControl.SensorControl;
 import com.example.materialdesign.Sensor.SensorData;
+import com.example.materialdesign.SharedPreferences.Config;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -18,24 +18,35 @@ import java.util.Map;
 /**
  * Created by B on 2018/2/22.
  *
- * 最大支持128个传感器
- * 【自定义的一个帧结构】一个包数据称为一帧，一帧可以包含多条指令。支持一次性发送多个包。
- * 【【帧头】】 (2字节)
- * 字节1{  帧总长度  }
- * 字节2{  0 ~ 5位:指令数  6 ~ 7位校验位 }//保证一次连接能够同时传送多条命令
- * 【【数据段】】
- * 字节1{  0 ~ 2位:主控制字(最大8种主控制字命令) 3 ~ 7位: 各个主控制字有不同实现 }
- * 【【【主控制字】】】:
- * 000: 请求传感器数据: 3 ~ 7位: 第7位为1:请求所有传感器数据，无下一字节。第7位为0，下一字节为传感器ID
- * 字节1{ 0 ~ 5 位：传感器ID   }
+ * 最大支持128个传感器、
+ * 自定义的数据传输格式：一个包数据称为一帧，一帧最大20个字节。一帧可以包含多条指令。一次连接可能会传送多个帧（即大于20个字节，会分包处理）。
+ * 帧结构：2个字节帧夿若干个字节的数据段。数据段由主控制字及相应数据构成。帧头第一个字节确定数据长度。
+ * 【帧头 2字节】
+ * 字节1{  帧总长度 }
+ * 字节2{  0 ~ 5 指令数}//保证一次连接能够同时传送多条命仿
+ * 【数据段】
+ * 【【第一条指令】】
+ *  字节1第一条指令开始{  0 ~ 2位主控制字(最多8种主控制字命令） 3 ~ 7位 各个主控制字有不同实现}
+ * 【【【主控制字】】
+ * 000: 请求传感器数据 3 ~ 7位 最高位为1:请求所有传感器数据，无下一字节。最高位为0，下一字节为传感器ID
+ * 			字节1{ 0 ~ 5 位：传感器ID   }
  * 001: 请求传感器信息。未定义
  * 010: 请求传感器状态。未定义
- * 011: 传感器控制命令: 次控制字 3 ~ 7位:传感器ID
- * 字节1{ 0 ~ 5 位：传感器控制命令 一个传感器支持最多128种命令
- * 6 ~ 7位:数据类型 00:int(4字节) 01:float(4字节) 10:String(19字节) 11:char(1字节) }
- * 111: 传送手机信息(String类型，之后的16个字节): 3 ~ 7位: 0000:手机号，0001:设备号IMEI
+ * 011: 传感器控制命令  次控制字 3 ~ 7位传感器ID
+ * 			字节1{ 0 ~ 5 位：传感器控制命令 一个传感器支持最多支持64种命令
+ *			 		   6 ~ 7位数据类型 00:int(4字节) 01:float(4字节) 10:String(19字节) 11:char(1字节) }
+ * 111: 传送手机信息。3 ~ 7位 0000:手机号，0001:设备号IMEI。数据String类型，长度16个字节。
+ * 【【第二条指令(根据帧头字节2判断)】】
+ * 同上...
+ */
+
+/**
+ *  BLE数据通信类
+ *  ->负责将功能翻译成自定义蓝牙数据格式。
+ *  ->负责将收到的自定义蓝牙数据格式翻译成显式数据。
  */
 public class BLECommunication {
+
     public static final int TYPE_INT = 0;
     public static final int TYPE_FLOAT = 1;
     public static final int TYPE_DOUBLE = 2;
@@ -117,42 +128,30 @@ public class BLECommunication {
         return true;
     }
 
-    //   111: 传送手机信息(String类型，之后的16个字节): 3 ~ 7位: 0000:手机号，0001:设备号IMEI，0010:SIM卡
-    public static Boolean sendDeviceInfo(String LocalDeviceInfoID, SharedPreferences sharedPreferences) {
+    //   111: 传送手机信息(String类型，之后的16个字节): 3 ~ 7位: 0000:手机号，(0001:设备号IMEI，0010:SIM卡)
+    public static Boolean sendPhone(Config config) {
         byte[] bytes = new byte[17];
         byte[] databytes;
-        if (LocalDeviceInfo.LOCALDEVICE_NUMBER.equals(LocalDeviceInfoID)) {
-            String phoneNumber = new LocalDeviceInfo(sharedPreferences).getLocalDeviceNumber();
-            if (phoneNumber != null) {
-                databytes = phoneNumber.getBytes();
-                bytes[0] = 0x7;
-                System.arraycopy(databytes, 0, bytes, 1, databytes.length);
-            }
-        } else if (LocalDeviceInfo.LOCALDEVICE_IMEI.equals(LocalDeviceInfoID)) {
-            String IMEI = new LocalDeviceInfo(sharedPreferences).getLocalDeviceIMEI();
-            if (IMEI != null) {
-                databytes = IMEI.getBytes();
-                bytes[0] = 0x7 + (1 << 3);
-                System.arraycopy(databytes, 0, bytes, 1, databytes.length);
-            }
-        } else if (LocalDeviceInfo.LOCALDEVICE_SIM.equals(LocalDeviceInfoID)) {
-            String SIM = new LocalDeviceInfo(sharedPreferences).getLocalDeviceSIM();
-            if (SIM != null) {
-                databytes = SIM.getBytes();
-                bytes[0] = 0x7 + (1 << 4);
-                System.arraycopy(databytes, 0, bytes, 1, databytes.length);
-            }
+        String phone=config.getPhone();
+//        String IMEI=config.getIMEI();
+//        String SIM=config.getSIM();
+        if (phone!=null) {
+            databytes = phone.getBytes();
+            bytes[0] = 0x7;
+            System.arraycopy(databytes, 0, bytes, 1, databytes.length);
+            setRequestBuffer(bytes);
         }
-        setRequestBuffer(bytes);
         return true;
     }
-
 
     private static byte[] requestBuffer;    //请求数据缓存
     private static List<Package> packages = new ArrayList<>();//包缓存
    public static byte CMDCount = 0;        //指令计数器
     private static Integer packageCount = 0;//包计数器
 
+    /**
+     *  一个包中包含指令计数器以及指令缓存
+     */
     private static class Package {
         byte CMDCount;
         byte[] bytes;
@@ -161,7 +160,11 @@ public class BLECommunication {
             this.bytes = bytes;
         }
     }
-    //大于20个字节分包
+
+    /**
+     *  指令缓存。大于20个字节再新建一个包存放。
+     *  @param bytes:指令字节数组。
+     */
     private static void setRequestBuffer(byte[] bytes) {
         if (requestBuffer == null) {
             requestBuffer = bytes;
@@ -183,7 +186,11 @@ public class BLECommunication {
             }
         }
     }
-    //一次发送多个包
+
+    /**
+     *  一次性发送所有缓存指令（蓝牙轮询调用）。发送完缓存清空。
+     *  @param mBluetoothLeService:蓝牙服务
+     */
     public static void sendRequest(BluetoothLeService mBluetoothLeService) {
         for (Package pack : packages) {
             byte[] request = new byte[pack.bytes.length + 2];
@@ -198,18 +205,6 @@ public class BLECommunication {
         packageCount = 0;
         requestDataFlag = false;
         requestBuffer = null;
-//        if (requestBuffer != null) {
-//            byte[] request = new byte[requestBuffer.length + 2];
-//            request[0] = (byte) request.length;
-//            request[1] = (byte) CMDCount;
-//            System.arraycopy(requestBuffer, 0, request, 2, requestBuffer.length);
-//            if (mBluetoothLeService != null && requestBuffer != null && BLEDeviceInfo.MACAddress != null) {
-//                mBluetoothLeService.WriteValue(request);
-//            }
-//            CMDCount = 0;
-//            requestDataFlag = false;
-//            requestBuffer = null;
-//        }
     }
 
     /**

@@ -17,7 +17,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-
+/**
+ * Fragment1的设备列表适配器
+ */
 public class DeviceListAdapter extends BaseAdapter {
     private Context mContext;
     private List<BLEDeviceInfo> deviceList = new ArrayList<>();

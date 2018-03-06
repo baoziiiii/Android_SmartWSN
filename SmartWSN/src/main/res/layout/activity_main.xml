@@ -37,27 +37,40 @@
                 android:background="?attr/colorPrimary"
                 android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
                 app:popupTheme="@style/ThemeOverlay.AppCompat.Light">
-
-
-
             </android.support.v7.widget.Toolbar>
 
             <android.support.v4.view.ViewPager
                 android:id="@+id/content"
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
-                android:layout_weight="13" />
+                android:layout_weight="15" />
 
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="#e1e0e0"
+                android:layout_marginLeft="10dp"
+                android:layout_marginRight="10dp"
+                android:layout_below="@id/fragment_1_gridlayout"
+                android:layout_marginTop="20dp">
+            </RelativeLayout>
             <android.support.design.widget.TabLayout
                 android:id="@+id/tabLayout"
                 android:layout_weight="1"
                 android:layout_width="match_parent"
-                android:layout_height="0dp"
-                app:tabIndicatorHeight="3dp"
-                app:tabGravity="center"
-                app:tabMode="scrollable" />
+                android:layout_height="30dp"
+                app:tabIndicatorHeight="0dp"
+                app:tabGravity="fill"
+                app:tabMaxWidth="0dp"
+                app:tabMode="fixed" >
+
+            </android.support.design.widget.TabLayout>
+
+
+
         </LinearLayout>
     </FrameLayout>
+
 
     <android.support.design.widget.NavigationView
         android:id="@+id/nav_view"

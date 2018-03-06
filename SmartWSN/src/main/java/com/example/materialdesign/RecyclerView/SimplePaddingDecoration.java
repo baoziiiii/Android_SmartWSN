@@ -8,7 +8,7 @@ import android.view.View;
 import com.example.materialdesign.R;
 
 /**
- * Created by MSI on 2018/3/1.
+ * Created by B on 2018/3/1.
  */
 
 public class SimplePaddingDecoration extends RecyclerView.ItemDecoration {

@@ -3,7 +3,9 @@ package com.example.materialdesign.Global;
 /**
  * Created by B on 2018/2/21.
  */
-
+/**
+ *  字符数组转换类（BLE相关）
+ */
 public class ByteArrayUtils {
     /**
      * 将4字节的byte数组转成一个int值

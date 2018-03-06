@@ -9,13 +9,12 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
-import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Point;
+import android.hardware.Sensor;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
@@ -39,41 +38,52 @@ import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
 import android.telephony.TelephonyManager;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.PopupMenu;
 import android.widget.Toast;
 
+import com.dd.CircularProgressButton;
 import com.example.materialdesign.BLE.BLEActivity;
 import com.example.materialdesign.BLE.BLECommunication;
 import com.example.materialdesign.BLE.BLEDeviceInfo;
 import com.example.materialdesign.BLE.BLEDeviceManager;
 import com.example.materialdesign.BLE.BluetoothLeService;
-import com.example.materialdesign.Global.LocalDeviceInfo;
+import com.example.materialdesign.Global.Clock;
+import com.example.materialdesign.SMS.MySMS;
 import com.example.materialdesign.Sensor.SensorData;
 import com.example.materialdesign.Global.MyLog;
 import com.example.materialdesign.Global.PermissionHandler;
 import com.example.materialdesign.NFC.ReadTextActivity;
 import com.example.materialdesign.NFC.WriteTextActivity;
+import com.example.materialdesign.SharedPreferences.Config;
 import com.xys.libzxing.zxing.activity.CaptureActivity;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
 
+import static com.example.materialdesign.Sensor.SensorData.SENSOR_CO2;
+import static com.example.materialdesign.Sensor.SensorData.SENSOR_HUMIDTY;
+import static com.example.materialdesign.Sensor.SensorData.SENSOR_LIGHT;
 import static com.example.materialdesign.Sensor.SensorData.SENSOR_TEMPERATURE;
 
 public class MainActivity extends AppCompatActivity {
+
+    private final static String SOURCE_ACTIVITY = MainActivity.class.getName();
 
     private final static int REQUEST_FOR_PERMISSION = 0;
     //    private final static int REQUEST_FOR_QR_RESULT = 1;
@@ -84,10 +94,9 @@ public class MainActivity extends AppCompatActivity {
     public final static int REQUEST_FOR_NFC_RESULT = 6;
     public final static int REQUEST_FOR_BLE_SCAN_RESULT = 7;
 
-    private final static String SOURCE_ACTIVITY = MainActivity.class.getName();
+    private final static Integer BLELoopPeriod = 5000;
 
     private DrawerLayout mDrawerLayout;
-    public static String tabname[] = {"连接", "监测", "控制"};
     private Boolean isDrag = false;
     private TabLayout tabLayout;
     private ViewPager viewPager;
@@ -98,51 +107,55 @@ public class MainActivity extends AppCompatActivity {
     private NavigationView navigationView;
     private static Uri uri_headicon;
     private ImageView iv_headicon;
-    private SharedPreferences.Editor editor;
-    private SharedPreferences config;
     private File imageCache;
     private File cachefile;
     private Fragment_1 fragment_1;
     private Fragment_2 fragment_2;
     private Fragment_3 fragment_3;
-    private Fragment_4 fragment_4;
-    private Fragment_5 fragment_5;
     private Intent sourceIntent;
     private Context context;
-    public Fragment fragment_graph;
-    public SensorData sensorData = SensorData.getSensorData();
+    private Config config;
+    private Thread countThread;
+    private SensorData sensorData = SensorData.getSensorData();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
         context = this;
         sourceIntent = getIntent();
-
-        editor = getSharedPreferences("config", MODE_PRIVATE).edit();
-        config = getSharedPreferences("config", MODE_PRIVATE);
+        config = Config.getInstance(this);
         setCachefile();
         createFloatingButton();
         createToolBar();
         createTabLayout();
         createNavigationView();
-        createHeadIcon(config.getBoolean("isFromCamera", false), false);
+        createHeadIcon(config.getHeadIconSource(false), false);
 
         Intent gattServiceIntent = new Intent(this, BluetoothLeService.class);
         MyLog.d(MyLog.TAG, "Try to bindService=" + bindService(gattServiceIntent, mServiceConnection, BIND_AUTO_CREATE));
         registerReceiver(mGattUpdateReceiver, makeGattUpdateIntentFilter());
-
 
         PermissionHandler.checkPermission(this,
                 new String[]{
                         Manifest.permission.ACCESS_COARSE_LOCATION,
                         Manifest.permission.BLUETOOTH,
                         Manifest.permission.ACCESS_FINE_LOCATION,
-                        Manifest.permission.READ_PHONE_STATE}
-                        , REQUEST_FOR_PERMISSION);
+                        Manifest.permission.READ_PHONE_STATE,
+                        Manifest.permission.SEND_SMS}
+                , REQUEST_FOR_PERMISSION);
+
+        sensorData.enableSensor(SENSOR_TEMPERATURE);
+        sensorData.enableSensor(SENSOR_HUMIDTY);
+        sensorData.enableSensor(SENSOR_CO2);
+        sensorData.enableSensor(SENSOR_LIGHT);
     }
 
+    /**
+     * 设置头像缓存路径
+     *
+     * @param
+     */
     public void setCachefile() {
         cachefile = getExternalCacheDir();
         imageCache = new File(cachefile + "/images/", "headicon.jpg");
@@ -158,16 +171,14 @@ public class MainActivity extends AppCompatActivity {
      * 头像设置
      *
      * @param isFromCamera   true:从相机获取，需要进行旋转处理 false:从相册获取
-     * @param useNewHeadIcon true:发生更换头像事件 false:重载头像
+     * @param useNewHeadIcon true:发生更换头像事件 false:载入存储头像
      */
     public void createHeadIcon(Boolean isFromCamera, Boolean useNewHeadIcon) {
         if (useNewHeadIcon) {
-            editor.putBoolean("useNewHeadIcon", useNewHeadIcon);
-            editor.apply();
+            config.setNewHeadIconFlag(useNewHeadIcon);
         }
-        if (config.getBoolean("useNewHeadIcon", false)) {
-            editor.putBoolean("isFromCamera", isFromCamera);
-            editor.apply();
+        if (config.getNewHeadIconFlag(false)) {
+            config.setHeadIconSource(isFromCamera);
             Bitmap temp;
             try {
                 temp = BitmapFactory.decodeStream(getContentResolver().openInputStream(uri_headicon));
@@ -186,7 +197,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * 创建标题栏
+     * 初始化标题栏
      */
     public void createToolBar() {
         toolbar = findViewById(R.id.toolbar);
@@ -199,15 +210,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * 创建导航视图
+     * 初始化导航视图
      */
-
-    private String email;
-    private String username;
-
+//    private String email;
+//    private String username;
     public void createNavigationView() {
-
-
         mDrawerLayout = findViewById(R.id.drawerlayout);
         navigationView = findViewById(R.id.nav_view);
         navigationView.setCheckedItem(R.id.nav_call);
@@ -218,18 +225,14 @@ public class MainActivity extends AppCompatActivity {
                 return true;
             }
         });
-
         View nav_header = navigationView.getHeaderView(0);
-
-        final EditText et_username = nav_header.findViewById(R.id.username);
-        final EditText et_email = nav_header.findViewById(R.id.mail);
+//        final EditText et_username = nav_header.findViewById(R.id.username);
+//        final EditText et_email = nav_header.findViewById(R.id.mail);
         iv_headicon = nav_header.findViewById(R.id.icon_image);
-
-        email = config.getString("email", "");
-        username = config.getString("username", "");
-        et_email.setText(email);
-        et_username.setText(username);
-
+//        email = config.getString("email", "");
+//        username = config.getString("username", "");
+//        et_email.setText(email);
+//        et_username.setText(username);
         iv_headicon.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
@@ -265,91 +268,170 @@ public class MainActivity extends AppCompatActivity {
                 return true;
             }
         });
-
-
-        et_username.setOnClickListener(new View.OnClickListener() {
+        final EditText et_phone = nav_header.findViewById(R.id.et_phone);
+        final CircularProgressButton bt_verify = nav_header.findViewById(R.id.bt_verify);
+        et_phone.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                et_username.setCursorVisible(true);
+                et_phone.setCursorVisible(true);
             }
         });
-        et_email.setOnClickListener(new View.OnClickListener() {
+        bt_verify.setOnClickListener(new View.OnClickListener() {
+            private Handler mCount;
+
             @Override
             public void onClick(View v) {
-                et_email.setCursorVisible(true);
-            }
-        });
-
-        final Button bt_save = nav_header.findViewById(R.id.bt_save);
-        bt_save.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                username = et_username.getText().toString();
-                email = et_email.getText().toString();
-                username.replaceAll("\\s", "");
-                email.replaceAll("\\s", "");
-                et_username.setText(username);
-                et_email.setText(email);
-                if (email.matches("\\w+@\\w+.((com)|(cn)|(gov)|(net)|(org)|(com.cn)|(net.cn))")) {
-                    et_email.setBackgroundResource(R.color.colorPrimary);
-                    Toast.makeText(MainActivity.this, "保存成功!", Toast.LENGTH_LONG).show();
-
-                    editor.putString("email", email);
-                    editor.putString("username", username);
-                    editor.apply();
-
-                    et_email.setCursorVisible(false);
-                    et_username.setCursorVisible(false);
+                BLEDeviceInfo currentDevice = BLEDeviceManager.getCurrentBLEDevice();
+                if (currentDevice != null && currentDevice.Status == true) {
+                    String phoneNumber = et_phone.getText().toString();
+                    phoneNumber.replaceAll("\\s", "");
+                    if (phoneNumber.matches("\\d{11}")) {
+                        bt_verify.setEnabled(false);
+                        bt_verify.setTextColor(getResources().getColor(R.color.cpb_white));
+                        config.setPhone(phoneNumber);
+                        et_phone.setCursorVisible(false);
+                        bt_verify.setEnabled(false);
+                        BLECommunication.sendPhone(config);
+                        Toast.makeText(context, "验证码已发送，请耐心等待", Toast.LENGTH_SHORT).show();
+                        countThread = new Thread(new Runnable() {
+                            @Override
+                            public void run() {
+                                while (Clock.count > 0) {
+                                    Message message = new Message();
+                                    message.what = 1;
+                                    mCount.sendMessage(message);
+                                    try {
+                                        Thread.sleep(1000);
+                                    } catch (InterruptedException e) {
+                                        e.printStackTrace();
+                                    }
+                                }
+                            }
+                        });
+                        Clock.count = 61;
+                        mCount = new Handler() {
+                            public void handleMessage(Message msg) {
+                                if (msg.what == 1) {
+                                    Clock.count--;
+                                    bt_verify.setText(Clock.count + " s");
+                                    if (Clock.count <= 0) {
+                                        bt_verify.setEnabled(true);
+                                        bt_verify.setText("发送验证码");
+                                    }
+                                }
+                                super.handleMessage(msg);
+                            }
+                        };
+                        countThread.start();
+                    } else {
+                        Toast.makeText(context, "请输入11位手机格式！", Toast.LENGTH_SHORT).show();
+                    }
                 } else {
-                    email = "";
-                    et_email.setBackgroundColor(Color.RED);
-                    Toast.makeText(MainActivity.this, "请检查email的格式！", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(context, "请先连接蓝牙设备", Toast.LENGTH_SHORT).show();
                 }
             }
         });
+//        et_username.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                et_username.setCursorVisible(true);
+//            }
+//        });
+//        et_email.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                et_email.setCursorVisible(true);
+//            }
+//        });
+//
+//        final Button bt_save = nav_header.findViewById(R.id.bt_save);
+//        bt_save.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                username = et_username.getText().toString();
+//                email = et_email.getText().toString();
+//                username.replaceAll("\\s", "");
+//                email.replaceAll("\\s", "");
+//                et_username.setText(username);
+//                et_email.setText(email);
+//                if (email.matches("\\w+@\\w+.((com)|(cn)|(gov)|(net)|(org)|(com.cn)|(net.cn))")) {
+//                    et_email.setBackgroundResource(R.color.colorPrimary);
+//                    Toast.makeText(MainActivity.this, "保存成功!", Toast.LENGTH_LONG).show();
+//                    editor.putString("email", email);
+//                    editor.putString("username", username);
+//                    editor.apply();
+//
+//                    et_email.setCursorVisible(false);
+//                    et_username.setCursorVisible(false);
+//                } else {
+//                    email = "";
+//                    et_email.setBackgroundColor(Color.RED);
+//                    Toast.makeText(MainActivity.this, "请检查email的格式！", Toast.LENGTH_SHORT).show();
+//                }
+//            }
+//        });
     }
 
     /**
-     * 创建标签及滑动页面
+     * 初始化底部标签栏及滑动页面
      */
     public void createTabLayout() {
         fragment_1 = new Fragment_1();
         fragment_2 = new Fragment_2();
         fragment_3 = new Fragment_3();
-//        fragment_4 = new Fragment_4();
-//        fragment_5 = new Fragment_5();
         tabLayout = findViewById(R.id.tabLayout);
         viewPager = findViewById(R.id.content);
         fragmentList = new ArrayList<>();
         fragmentList.add(fragment_1);
         fragmentList.add(fragment_2);
         fragmentList.add(fragment_3);
-//        fragmentList.add(fragment_4);
-//        fragmentList.add(fragment_5);
-        tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
-            @Override
-            public void onTabSelected(TabLayout.Tab tab) {
-                viewPager.setCurrentItem(tab.getPosition());
-            }
-
-            @Override
-            public void onTabUnselected(TabLayout.Tab tab) {
-            }
-
-            @Override
-            public void onTabReselected(TabLayout.Tab tab) {
-            }
-        });
+//        tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
+//            @Override
+//            public void onTabSelected(TabLayout.Tab tab) {
+//                viewPager.setCurrentItem(tab.getPosition());
+//            }
+//
+//            @Override
+//            public void onTabUnselected(TabLayout.Tab tab) {
+//            }
+//
+//            @Override
+//            public void onTabReselected(TabLayout.Tab tab) {
+//            }
+//        });
         fragmentManager = getFragmentManager();
         FragmentAdapter fragmentAdapter = new FragmentAdapter(fragmentManager, fragmentList);
-
         viewPager.setAdapter(fragmentAdapter);
         tabLayout.setupWithViewPager(viewPager);
+        setTabs(tabLayout, this.getLayoutInflater(), new int[]{R.drawable.control, R.drawable.control, R.drawable.control});
         tabLayout.getTabAt(0).select();
     }
 
+    private void setTabs(TabLayout tabLayout, LayoutInflater inflater, int[] tabImgs) {
+
+        tabLayout.getTabAt(0).setIcon(R.drawable.tab_connect);
+        tabLayout.getTabAt(1).setIcon(R.drawable.tab_monitor);
+        tabLayout.getTabAt(2).setIcon(R.drawable.tab_control);
+
+        View view1 = getLayoutInflater().inflate(R.layout.tab_custom_connect, null);
+        ImageView imageView1 = view1.findViewById(R.id.img_tab_connect);
+        imageView1.setImageResource(R.drawable.tab_connect);
+        tabLayout.getTabAt(0).setCustomView(view1);
+
+        View view2 = getLayoutInflater().inflate(R.layout.tab_custom_monitor, null);
+        ImageView imageView2 = view2.findViewById(R.id.img_tab_monitor);
+        imageView2.setImageResource(R.drawable.tab_monitor);
+        tabLayout.getTabAt(1).setCustomView(view2);
+
+        View view3 = getLayoutInflater().inflate(R.layout.tab_custom_control, null);
+        ImageView imageView3 = view3.findViewById(R.id.img_tab_control);
+        imageView3.setImageResource(R.drawable.tab_control);
+        tabLayout.getTabAt(2).setCustomView(view3);
+
+    }
+
     /**
-     * 创建浮动按钮
+     * 初始化浮动按钮
      */
     public void createFloatingButton() {
         fab = findViewById(R.id.fab);
@@ -357,8 +439,8 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 if (isDrag == false) {
-                    BLEDeviceInfo currentDevice=BLEDeviceManager.getCurrentBLEDevice();
-                    if (currentDevice== null) {
+                    BLEDeviceInfo currentDevice = BLEDeviceManager.getCurrentBLEDevice();
+                    if (currentDevice == null) {
                         Toast.makeText(MainActivity.this, "没有设备可供连接", Toast.LENGTH_SHORT).show();
                     } else {
                         if (currentDevice.Switch) {
@@ -381,7 +463,6 @@ public class MainActivity extends AppCompatActivity {
                 return false;
             }
         });
-
         fab.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
@@ -409,15 +490,30 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * 创建标题栏菜单
+     * 初始化标题栏菜单
      *
      * @param menu 菜单
      * @Return Boolean  返回true显示
      */
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.toolbar, menu);
+        setIconEnable(menu, true);
+        menu.add("扫描二维码").setIcon(R.drawable.qr_small_icon);
+        menu.add("NFC").setIcon(R.drawable.nfc_small_icon);
+        menu.add("蓝牙连接").setIcon(R.drawable.bluetooth_small_icon);
         return true;
+    }
+
+    //enable为true时，菜单添加图标有效，enable为false时无效。4.0系统默认无效
+    private void setIconEnable(Menu menu, boolean enable) {
+        try {
+            Class<?> clazz = Class.forName("com.android.internal.view.menu.MenuBuilder");
+            Method m = clazz.getDeclaredMethod("setOptionalIconsVisible", boolean.class);
+            m.setAccessible(true);
+            m.invoke(menu, enable);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -452,6 +548,7 @@ public class MainActivity extends AppCompatActivity {
         return true;
     }
 
+
     /**
      * 取得二维码扫描结果
      *
@@ -465,14 +562,14 @@ public class MainActivity extends AppCompatActivity {
             case REQUEST_FOR_QR_RESULT:
                 if (resultCode == Activity.RESULT_OK) {
                     String MACAddress = data.getExtras().getString("result");
-                    if(MACAddress!=null&&MACAddress.startsWith(WriteTextActivity.prefix)) {
-                        MACAddress=MACAddress.replace(WriteTextActivity.prefix,"");
+                    if (MACAddress != null && MACAddress.startsWith(WriteTextActivity.prefix)) {
+                        MACAddress = MACAddress.replace(WriteTextActivity.prefix, "");
                         BLEDeviceManager.addBLEDevice(new BLEDeviceInfo(null, MACAddress));
                         BLEDeviceManager.setCurrentBLEDevice(MACAddress);
                         MyLog.i(MyLog.TAG, MACAddress);
                         Toast.makeText(context, BLEDeviceManager.getCurrentBLEDevice().MACAddress, Toast.LENGTH_SHORT).show();
                         beginBLELoop();
-                    }else{
+                    } else {
                         Toast.makeText(context, "无效的二维码", Toast.LENGTH_SHORT).show();
                     }
                 } else {
@@ -488,7 +585,7 @@ public class MainActivity extends AppCompatActivity {
                 break;
             case REQUEST_FOR_BLE_SCAN_RESULT:
                 if (resultCode == Activity.RESULT_OK) {
-                     beginBLELoop();
+                    beginBLELoop();
                 } else {
                     Toast.makeText(context, "BLE设备获取失败", Toast.LENGTH_SHORT).show();
                 }
@@ -533,9 +630,11 @@ public class MainActivity extends AppCompatActivity {
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         switch (requestCode) {
             case REQUEST_FOR_PERMISSION:
-                    if(checkSelfPermission(Manifest.permission.READ_PHONE_STATE)==PackageManager.PERMISSION_GRANTED){
-                        getPhoneInfo();
-                    }
+                if (checkSelfPermission(Manifest.permission.READ_PHONE_STATE) == PackageManager.PERMISSION_GRANTED) {
+//                        getPhoneInfo();
+//                        SmsManager.getDefault().sendTextMessage(MySMS.SERVERPHONE,
+//                                null, "register", null, null);
+                }
 //                for (int grantResult : grantResults) {
 //                    if (grantResult != PackageManager.PERMISSION_GRANTED) {
 ////                        Toast.makeText(this, "你拒绝了权限！", Toast.LENGTH_SHORT).show();
@@ -554,26 +653,6 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public Boolean getPhoneInfo(){
-        try {
-            TelephonyManager tm = (TelephonyManager) this.getSystemService(Context.TELEPHONY_SERVICE);
-//            String deviceid = tm.getDeviceId();//获取智能设备唯一编号 //因为新安全机制，已经无法获取。
-            String tel = tm.getLine1Number();//获取本机号码
-            String sim = tm.getSimSerialNumber();//获得SIM卡的序号
-//            if (deviceid != null) {
-//                editor.putString(LocalDeviceInfo.LOCALDEVICE_IMEI, deviceid);
-//            }
-            if (tel != null) {
-                editor.putString(LocalDeviceInfo.LOCALDEVICE_NUMBER, tel);
-            }
-            if (sim != null) {
-                editor.putString(LocalDeviceInfo.LOCALDEVICE_SIM, sim);
-            }
-        } catch (SecurityException e) {
-            return false;
-        }
-        return true;
-    }
 
     public BluetoothLeService mBluetoothLeService;
 
@@ -587,9 +666,8 @@ public class MainActivity extends AppCompatActivity {
         return intentFilter;
     }
 
-    // Code to manage Service lifecycle.
+    // 蓝牙连接服务
     public final ServiceConnection mServiceConnection = new ServiceConnection() {
-
         @Override
         public void onServiceConnected(ComponentName componentName, IBinder service) {
             mBluetoothLeService = ((BluetoothLeService.LocalBinder) service).getService();
@@ -597,7 +675,6 @@ public class MainActivity extends AppCompatActivity {
                 MyLog.e(MyLog.TAG, "Unable to initialize Bluetooth");
             else
                 MyLog.i(MyLog.TAG, "mBluetoothLeService is okay");
-
             if (sourceIntent != null) {
                 String NFCResult = sourceIntent.getStringExtra(ReadTextActivity.EXTRA_NFCRESULT);
                 MyLog.i(MyLog.TAG, "NFCResult:" + NFCResult);
@@ -615,9 +692,13 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
-    public void beginBLELoop() {
 
-        final BLEDeviceInfo currentDevice=BLEDeviceManager.getCurrentBLEDevice();
+    /**
+     * 开始BLE轮询:
+     * BLE轮询开始后，以固定周期(BLELoopPeriod)与BLE设备进行短暂连接，100ms后自动断开。
+     */
+    public void beginBLELoop() {
+        final BLEDeviceInfo currentDevice = BLEDeviceManager.getCurrentBLEDevice();
         currentDevice.Switch = true;
         fab.setImageResource(R.drawable.fab_ble_connected);
         deviceListUpdate();
@@ -656,12 +737,12 @@ public class MainActivity extends AppCompatActivity {
                         message = handler.obtainMessage();
                         message.what = 1;
                         handler.sendMessage(message);
-                        Thread.sleep(5000);
+                        Thread.sleep(BLELoopPeriod);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
                 }
-                currentDevice.Status=false;
+                currentDevice.Status = false;
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
@@ -670,11 +751,13 @@ public class MainActivity extends AppCompatActivity {
                         deviceListUpdate();
                     }
                 });
-
             }
         }).start();
     }
 
+    /**
+     * 断开BLE连接
+     */
     public void disconnectBLEConnection() {
         while (BLEDeviceManager.getCurrentBLEDevice().Connected) {
             MyLog.i(MyLog.TAG, "disconnectBLEConnection");
@@ -687,31 +770,6 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public void deviceListUpdate() {
-        MyLog.i(MyLog.TAG, "deviceListUpdate");
-        try {
-            fragment_1.deviceListAdapter.setDeviceList(BLEDeviceManager.deviceList);
-            fragment_1.deviceListAdapter.notifyDataSetChanged();
-        } catch (NullPointerException e) {
-            MyLog.e(MyLog.TAG, "NULLPOINTER");
-        }
-    }
-
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-
-        unregisterReceiver(mGattUpdateReceiver);
-        unbindService(mServiceConnection);
-        //this.unregisterReceiver(mGattUpdateReceiver);
-        //unbindService(mServiceConnection);
-        if (mBluetoothLeService != null) {
-            mBluetoothLeService.close();
-            mBluetoothLeService = null;
-        }
-        MyLog.d(MyLog.TAG, "We are in destroy");
-    }
-
 // Handles various events fired by the Service.
 // ACTION_GATT_CONNECTED: connected to a GATT server.
 // ACTION_GATT_DISCONNECTED: disconnected from a GATT server.
@@ -719,18 +777,22 @@ public class MainActivity extends AppCompatActivity {
 // ACTION_DATA_AVAILABLE: received data from the device. This can be a
 // result of read or notification operations.
 
+
     /**
-     * @var hasReiceved:  True when the result has been received in current connection
-     * set to false when disconnected
+     * @var hasReiceved: true:本次连接已经一次传感器数据。否则:false
      */
     private Boolean hasReceived = false;
 
 
+    /**
+     * 蓝牙服务广播接受者
+     */
     private final BroadcastReceiver mGattUpdateReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             final String action = intent.getAction();
-            BLEDeviceInfo currentDevice=BLEDeviceManager.getCurrentBLEDevice();
+            BLEDeviceInfo currentDevice = BLEDeviceManager.getCurrentBLEDevice();
+            //成功连接
             if (BluetoothLeService.ACTION_GATT_CONNECTED.equals(action)) {
                 MyLog.d(MyLog.TAG, "ACTION_GATT_CONNECTED");
                 if (currentDevice.Switch) {
@@ -739,15 +801,19 @@ public class MainActivity extends AppCompatActivity {
                     deviceListUpdate();
                 } else {
                     deviceListUpdate();
-                    Log.e(MyLog.TAG, "bwq");
+                    Log.e(MyLog.TAG, "CONNECTED when SWITCH IS OFF");
                     disconnectBLEConnection();
                 }
-            } else if (BluetoothLeService.ACTION_GATT_DISCONNECTED.equals(action)) { //�Ͽ�����
+
+            }
+            //断开连接
+            else if (BluetoothLeService.ACTION_GATT_DISCONNECTED.equals(action)) { //�Ͽ�����
                 MyLog.d(MyLog.TAG, "ACTION_GATT_DISCONNECTED");
                 hasReceived = false;
                 currentDevice.Connected = false;
-
-            } else if (BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED.equals(action)) //���Կ�ʼ�ɻ���
+            }
+            //检测到BLE设备的SERVICES
+            else if (BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED.equals(action)) //���Կ�ʼ�ɻ���
             {
                 MyLog.d(MyLog.TAG, "ACTION_GATT_SERVICES_DISCOVERED");
                 if (mBluetoothLeService != null) {
@@ -755,6 +821,7 @@ public class MainActivity extends AppCompatActivity {
                     BLECommunication.sendRequest(mBluetoothLeService);
                 }
                 final Handler handler = new Handler();
+                //限制100ms的连接时间
                 new Thread(new Runnable() {
                     @Override
                     public void run() {
@@ -768,13 +835,14 @@ public class MainActivity extends AppCompatActivity {
                         }, 100); //100ms强制断开
                     }
                 }).start();
-
-            } else if (BluetoothLeService.ACTION_DATA_AVAILABLE.equals(action)) {
+            }
+            //收到数据
+            else if (BluetoothLeService.ACTION_DATA_AVAILABLE.equals(action)) {
                 byte[] data = intent.getByteArrayExtra(BluetoothLeService.EXTRA_DATA);
                 if (data != null && data.length != 1 && (!hasReceived)) {
-                    if (currentDevice.Status==false) {
+                    if (currentDevice.Status == false) {
                         Toast.makeText(MainActivity.this, "成功连接" + currentDevice.Name, Toast.LENGTH_SHORT).show();
-                        currentDevice.Status=true;
+                        currentDevice.Status = true;
                     }
                     MyLog.i(MyLog.TAG, "Data Received");
                     String string = BLECommunication.parseRawData(data);
@@ -784,6 +852,20 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     };
+
+    /**
+     * 设备状态信息更新
+     */
+    public void deviceListUpdate() {
+        MyLog.i(MyLog.TAG, "deviceListUpdate");
+        try {
+            fragment_1.deviceListAdapter.setDeviceList(BLEDeviceManager.deviceList);
+            fragment_1.deviceListAdapter.notifyDataSetChanged();
+        } catch (NullPointerException e) {
+            MyLog.e(MyLog.TAG, "NULLPOINTER");
+        }
+    }
+
 
     @Override
     protected void onPause() {
@@ -799,4 +881,20 @@ public class MainActivity extends AppCompatActivity {
     protected void onRestart() {
         super.onRestart();
     }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        countThread.stop();
+        unregisterReceiver(mGattUpdateReceiver);
+        unbindService(mServiceConnection);
+        //this.unregisterReceiver(mGattUpdateReceiver);
+        //unbindService(mServiceConnection);
+        if (mBluetoothLeService != null) {
+            mBluetoothLeService.close();
+            mBluetoothLeService = null;
+        }
+        MyLog.d(MyLog.TAG, "We are in destroy");
+    }
+
 }

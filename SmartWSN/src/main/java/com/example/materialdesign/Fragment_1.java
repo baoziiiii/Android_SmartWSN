@@ -9,6 +9,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.LocationManager;
+import android.media.Image;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
@@ -17,6 +18,7 @@ import android.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.Toast;
 
@@ -35,22 +37,22 @@ import com.xys.libzxing.zxing.activity.CaptureActivity;
  * Created by B on 2018/2/4.
  */
 
+/**
+ *  蓝牙连接页面
+ */
 public class Fragment_1 extends Fragment {
 
+    private final static String SOURCE_ACTIVITY = Fragment_1.class.getName();
     public final static int REQUEST_FOR_PERMISSION = 0;
     public final static int REQUEST_FOR_QR_RESULT = 1;
     public final static int REQUEST_FOR_NFC_RESULT = 2;
     public final static int REQUEST_FOR_BLE_SCAN_RESULT = 3;
 
-    private final static String SOURCE_ACTIVITY = Fragment_1.class.getName();
-
     private Context context;
-    private CircularProgressButton bt_nfc;
-    private CircularProgressButton bt_qr;
-    private CircularProgressButton bt_ble;
-
+    private ImageButton bt_nfc;
+    private ImageButton bt_qr;
+    private ImageButton bt_ble;
     private ListView deviceListView;
-
     public DeviceListAdapter deviceListAdapter;
 
     @Nullable
@@ -65,10 +67,8 @@ public class Fragment_1 extends Fragment {
         bt_ble.setOnClickListener(onClickListener);
 
         deviceListView = view.findViewById(R.id.device_list);
-
         deviceListAdapter = new DeviceListAdapter(getActivity(), BLEDeviceManager.deviceList);
         deviceListView.setAdapter(deviceListAdapter);
-
         context = MyApplication.getInstance();
         return view;
     }

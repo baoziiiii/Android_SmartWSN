@@ -32,7 +32,6 @@ import static com.example.materialdesign.Sensor.SensorData.SENSOR_LIGHT;
 import static com.example.materialdesign.Sensor.SensorData.SENSOR_TEMPERATURE;
 
 public class Fragment_Monitor extends Fragment {
-
     public int chartID;
     private LineData lineData;
     private LineChart linechart;
@@ -52,7 +51,7 @@ public class Fragment_Monitor extends Fragment {
     private TextView textView_avr_light;
     private TextView textView_avr_fanspeed;
 
-    SensorData data = SensorData.getSensorData();
+    private SensorData data = SensorData.getSensorData();
     private LocalBroadcastManager localBroadcastManager;
     private IntentFilter intentFilter;
     private LocalReceiver localReceiver;
@@ -62,6 +61,10 @@ public class Fragment_Monitor extends Fragment {
     public Fragment_Monitor() {
     }
 
+    /**
+     * 接收图表ID
+     * @param args:包含从顶部菜单选择所对应的图表ID
+     */
     @Override
     public void setArguments(Bundle args) {
         chartID = args.getInt(LineChartFactory.CHART);
@@ -72,87 +75,28 @@ public class Fragment_Monitor extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        //初始化布局
         View view = inflater.inflate(R.layout.graph_groupview, null);
         graph_detail = view.findViewById(R.id.fragment_2_graph_detail);
         InitTextView(graph_detail);
-        linechart = (LineChart) view.findViewById(R.id.linechart);
+
+        //初始化图表
+        linechart = view.findViewById(R.id.linechart);
         linechart.clear();
-        data.enableSensor(SENSOR_TEMPERATURE);
-        data.enableSensor(SENSOR_HUMIDTY);
-        data.enableSensor(SENSOR_CO2);
-        data.enableSensor(SENSOR_LIGHT);
         lineChartFactory = new LineChartFactory(getActivity(), linechart,
                 chartID);
         lineData = lineChartFactory.getLineData();
         linechart = lineChartFactory.getLineChart();
         linechart.invalidate();
 
+        //广播接收器，接收数据更新广播，更新图表。
         localBroadcastManager = LocalBroadcastManager.getInstance(getActivity());
-
         intentFilter = new IntentFilter();
         intentFilter.addAction(SensorData.ACTION_NOTIFY_FRAGMENTS);
-
-        //创建广播接收器实例，并注册。将其接收器与action标签进行绑定。
         localReceiver = new LocalReceiver();
         localBroadcastManager.registerReceiver(localReceiver, intentFilter);
 
-//        final Button bt_start = view.findViewById(R.id.start);
-//        final ExecutorService pool = Executors.newSingleThreadExecutor();
-//        bt_start.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//                bt_start.setEnabled(false);
-//                lineData.setDrawValues(true);
-//                pool.submit(new Runnable() {
-//                    @Override
-//                    public void run() {
-//                        for (int i = 0; i < 24; i++) {
-//
-////                    if (data.getLineDataSetSize(SENSOR_TEMPERATURE) > 5) {
-////                        data.getLineDataSet(SENSOR_TEMPERATURE).removeFirst();
-////                    }
-////                    if (data.getLineDataSetSize(SENSOR_HUMIDTY) > 5) {
-////                        data.getLineDataSet(SENSOR_HUMIDTY).removeFirst();
-////                    }
-//                            final Float temperature = (float) (Math.random() * 10) + 1;
-//                            Float humidity = (float) (Math.random() * 20) + 30;
-//                            switch (chartID) {
-//                                case CHART_TEMPERATURE_AND_HUMIDITY:
-//                                    data.updateData(SENSOR_TEMPERATURE, new Entry(i, temperature));
-//                                    data.updateData(SENSOR_HUMIDTY, new Entry(i, humidity));
-//                                    break;
-//                                case CHART_CO2:
-//                                    data.updateData(SENSOR_CO2, new Entry(i, temperature));
-//                                    break;
-//                                case CHART_LIGHT:
-//                                    data.updateData(SENSOR_LIGHT, new Entry(i, temperature));
-//                                    break;
-//                            }
-//
-//                            getActivity().runOnUiThread(new Runnable() {
-//                                @Override
-//                                public void run() {
-//
-//                                    DecimalFormat decimalFormat = new DecimalFormat("##0.0");
-//
-//
-//                                    linechart.animateX(50, Easing.EasingOption.EaseOutQuart);
-//                                    lineChartFactory.updateLineChart();
-//                                    lineChartFactory.setViewPort();
-//
-//                                }
-//                            });
-//                            try {
-//                                Thread.sleep(1000);
-//                            } catch (InterruptedException e) {
-//                                e.printStackTrace();
-//                            }
-//                        }
-//                    }
-//                });
-//            }
-//        });
-
+        //初始化图表按键
         CircularProgressButton bt_fitAll = view.findViewById(R.id.fitAll);
         bt_fitAll.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -187,6 +131,9 @@ public class Fragment_Monitor extends Fragment {
         return view;
     }
 
+    /**
+     * 初始化图表下方文字信息
+     */
     private void InitTextView(ViewGroup parentView) {
         LayoutInflater inflater1 = LayoutInflater.from(getActivity());
         View view = inflater1.inflate(R.layout.fragment_2_monitor_graph, parentView);
@@ -254,6 +201,9 @@ public class Fragment_Monitor extends Fragment {
         }
     }
 
+    /**
+     * 数据更新本地广播接受者
+     */
     class LocalReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -261,34 +211,33 @@ public class Fragment_Monitor extends Fragment {
             if (SensorData.ACTION_NOTIFY_FRAGMENTS.equals(intent.getAction())) {
                 switch (chartID) {
                     case CHART_TEMPERATURE_AND_HUMIDITY: {
-                        textView_max_temp.setText(data.getSendorDataMax(SENSOR_TEMPERATURE).toString());
-                        textView_max_hum.setText(data.getSendorDataMax(SENSOR_HUMIDTY).toString());
-                        textView_min_temp.setText(data.getSendorDataMin(SENSOR_TEMPERATURE).toString());
-                        textView_min_hum.setText(data.getSendorDataMin(SENSOR_HUMIDTY).toString());
+                        textView_max_temp.setText(data.getSendorDataMax(SENSOR_TEMPERATURE));
+                        textView_max_hum.setText(data.getSendorDataMax(SENSOR_HUMIDTY));
+                        textView_min_temp.setText(data.getSendorDataMin(SENSOR_TEMPERATURE));
+                        textView_min_hum.setText(data.getSendorDataMin(SENSOR_HUMIDTY));
                         textView_avr_temp.setText(data.getSensorDataAvr(SENSOR_TEMPERATURE).toString());
                         textView_avr_humid.setText(data.getSensorDataAvr(SENSOR_HUMIDTY).toString());
                     }
                     break;
                     case CHART_CO2: {
-                        textView_max_co2.setText(data.getSendorDataMax(SENSOR_CO2).toString());
-                        textView_min_co2.setText(data.getSendorDataMin(SENSOR_CO2).toString());
+                        textView_max_co2.setText(data.getSendorDataMax(SENSOR_CO2));
+                        textView_min_co2.setText(data.getSendorDataMin(SENSOR_CO2));
                         textView_avr_co2.setText(data.getSensorDataAvr(SENSOR_CO2).toString());
                     }
                     break;
                     case CHART_LIGHT: {
-                        textView_max_light.setText(data.getSendorDataMax(SENSOR_LIGHT).toString());
-                        textView_min_light.setText(data.getSendorDataMin(SENSOR_LIGHT).toString());
+                        textView_max_light.setText(data.getSendorDataMax(SENSOR_LIGHT));
+                        textView_min_light.setText(data.getSendorDataMin(SENSOR_LIGHT));
                         textView_avr_light.setText(data.getSensorDataAvr(SENSOR_LIGHT).toString());
                     }
                     break;
                     case CHART_FANSPEED: {
-                        textView_max_fanspeed.setText(data.getSendorDataMax(SENSOR_FAN).toString());
-                        textView_min_fanspeed.setText(data.getSendorDataMin(SENSOR_FAN).toString());
+                        textView_max_fanspeed.setText(data.getSendorDataMax(SENSOR_FAN));
+                        textView_min_fanspeed.setText(data.getSendorDataMin(SENSOR_FAN));
                         textView_avr_fanspeed.setText(data.getSensorDataAvr(SENSOR_FAN).toString());
                     }
                     break;
                 }
-
             }
         }
     }

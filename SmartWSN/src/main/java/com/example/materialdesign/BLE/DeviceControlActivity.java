@@ -33,6 +33,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+/**
+ *  BLE通信页面。（废弃）
+ */
+
 public class DeviceControlActivity extends AppCompatActivity {
     private final static String TAG =  MyLog.TAG;
 
@@ -59,7 +63,6 @@ public class DeviceControlActivity extends AppCompatActivity {
         intentFilter.addAction(BluetoothDevice.ACTION_UUID);
         return intentFilter;
     }
-
 
     // Code to manage Service lifecycle.
     private final ServiceConnection mServiceConnection = new ServiceConnection() {

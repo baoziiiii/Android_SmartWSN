@@ -16,7 +16,9 @@ import com.example.materialdesign.R;
 /**
  * Created by B on 2018/2/9.
  */
-
+/**
+ *  NFC写入类。
+ */
 public class WriteNfcAcitivity extends BaseNfcActivity {
     private String mPackageName = "com.example.materialdesign";
     @Override

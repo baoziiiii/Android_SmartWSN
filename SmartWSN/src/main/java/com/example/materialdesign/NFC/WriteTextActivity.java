@@ -19,6 +19,9 @@ import java.util.Locale;
  * Created by B on 2018/2/11.
  */
 
+/**
+ *  NFC文本写入页面
+ */
 public class WriteTextActivity extends BaseNfcActivity {
     public final static String prefix="G&QUIWHI|";
     private String mText = prefix+"00:15:83:E0:15:6B";

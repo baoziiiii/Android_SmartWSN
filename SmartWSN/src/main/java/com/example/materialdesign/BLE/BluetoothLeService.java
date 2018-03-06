@@ -22,6 +22,12 @@ import java.nio.ByteOrder;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ *  BLE服务类。
+ *  ->提供BLE的所有服务。包括BLE设备的扫描、查询、连接、断开、发送、接收。
+ *  ->向整个应用广播通知BLE的连接状态改变及数据。
+ */
+
 public class BluetoothLeService extends Service {
 
     private final static String TAG = "bwq";
@@ -48,12 +54,12 @@ public class BluetoothLeService extends Service {
             "com.example.bluetooth.le.EXTRA_DATA";
 
     public final static UUID UUID_NOTIFY =
-            UUID.fromString("0000180e-0000-1000-8000-00805f9b34fb");
+            UUID.fromString("0000180e-0000-1000-8000-00805f9b34fb"); //characterisctics自动通知通道的UUID
     public final static UUID UUID_SERVICE =
-            UUID.fromString("0000ffe0-0000-1000-8000-00805f9b34fb");
+            UUID.fromString("0000ffe0-0000-1000-8000-00805f9b34fb"); //所指定的SERVICE的UUID
     public final static UUID SENSOR_SERVICE =
             UUID.fromString("0000180d-0000-1000-8000-00805f9b34fb");
-    public final static UUID UUID_CHAR_1 =
+    public final static UUID UUID_CHAR_1 =                          //所指定的characteristics的UUID
                 UUID.fromString("0000180e-0000-1000-8000-00805f9b34fb");
 //    public final static UUID UUID_CHAR_1 =
 //            UUID.fromString("0000ffe2-0000-1000-8000-00805f9b34fb");
@@ -63,15 +69,15 @@ public class BluetoothLeService extends Service {
     public BluetoothGattCharacteristic mNotifyCharacteristic;
     public BluetoothGattCharacteristic mWriteCharacteristic;
 
-    // Various callback methods defined by the BLE API.
+    //BLE底层类指定的回调
     private final BluetoothGattCallback mGattCallback =
             new BluetoothGattCallback() {
                 @Override
                 public void onConnectionStateChange(BluetoothGatt gatt, int status,
                                                     int newState) {
                     String intentAction;
-
                     MyLog.i(TAG,"onConnectionStateChange");
+                    //成功连接。
                     if (newState == BluetoothProfile.STATE_CONNECTED) {
                         intentAction = ACTION_GATT_CONNECTED;
                         mConnectionState = STATE_CONNECTED;
@@ -79,16 +85,17 @@ public class BluetoothLeService extends Service {
                         MyLog.i(TAG, "Connected to GATT server.");
                         MyLog.i(TAG, "Attempting to start service discovery:" +
                                 mBluetoothGatt.discoverServices());
-                    } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
+                    }
+                    //成功断开。
+                    else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
                         intentAction = ACTION_GATT_DISCONNECTED;
                         mConnectionState = STATE_DISCONNECTED;
                         MyLog.i(TAG, "Disconnected from GATT server.");
                         broadcastUpdate(intentAction);
                     }
                 }
-
                 @Override
-                // New services discovered
+                // 发现新服务
                 public void onServicesDiscovered(BluetoothGatt gatt, int status) {
                     if (status == BluetoothGatt.GATT_SUCCESS) {
                         broadcastUpdate(ACTION_GATT_SERVICES_DISCOVERED, gatt.getServices());
@@ -98,7 +105,7 @@ public class BluetoothLeService extends Service {
                 }
 
                 @Override
-                // Result of a characteristic read operation
+                //成功读取char
                 public void onCharacteristicRead(BluetoothGatt gatt,
                                                  BluetoothGattCharacteristic characteristic,
                                                  int status) {
@@ -107,14 +114,14 @@ public class BluetoothLeService extends Service {
                         broadcastUpdate(ACTION_DATA_AVAILABLE, characteristic);
                     }
                 }
-
+                //char更新通知
                 @Override
                 public void onCharacteristicChanged(BluetoothGatt gatt,
                                                     BluetoothGattCharacteristic characteristic) {
                     broadcastUpdate(ACTION_DATA_AVAILABLE, characteristic);
                     MyLog.d(TAG, "OnCharacteristicChanged");
                 }
-
+                //成功发送char
                 @Override
                 public void onCharacteristicWrite(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic,
                                                   int status) {
@@ -156,11 +163,13 @@ public class BluetoothLeService extends Service {
 //        mBluetoothGatt.setCharacteristicNotification(characteristic, enabled);
 //    }
 
+    //广播通知。
     private void broadcastUpdate(final String action) {
         final Intent intent = new Intent(action);
         sendBroadcast(intent);
     }
 
+    //找到相关服务的广播通知。
     private void broadcastUpdate(final String action, final List<BluetoothGattService> gattServices) {
         MyLog.i(TAG, "Services count :" + gattServices.size());
         for (BluetoothGattService gattService : gattServices) {
@@ -187,6 +196,7 @@ public class BluetoothLeService extends Service {
         }
     }
 
+    //接收到数据的广播通知
     private void broadcastUpdate(final String action,
                                  final BluetoothGattCharacteristic characteristic) {
         final Intent intent = new Intent(action);
@@ -316,6 +326,9 @@ public class BluetoothLeService extends Service {
         return true;
     }
 
+    /**
+     *  将数据封装成characterstic发送。
+     */
     public void WriteValue(byte[] bytes) {
         if (mWriteCharacteristic != null) {
             MyLog.i(MyLog.TAG,"Characteristic Write:"+bytes.toString());
@@ -323,7 +336,6 @@ public class BluetoothLeService extends Service {
             mBluetoothGatt.writeCharacteristic(mWriteCharacteristic);
         }
     }
-
 
     /**
      * Disconnects an existing connection or cancel a pending connection. The disconnection result
