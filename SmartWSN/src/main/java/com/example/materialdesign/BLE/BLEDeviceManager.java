@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Created by MSI on 2018/3/2.
+ * Created by B on 2018/3/2.
  */
 /**
  *  BLE设备管理类。

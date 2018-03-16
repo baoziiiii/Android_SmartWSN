@@ -168,6 +168,9 @@ public class SensorData {
                 updateData(ID, new Entry((float) ((System.currentTimeMillis() - Clock.startime) / 1000), newData));
             } catch (NumberFormatException e) {
             }
+            catch (IndexOutOfBoundsException e){
+                MyLog.e(TAG,"IndexOutOfBoundsException");
+            }
         }
     }
 
@@ -198,7 +201,11 @@ public class SensorData {
      * 输出指定传感器的图表数据集。
      */
     public LineDataSet getLineDataSet(Integer ID) {
-        return sensorMap.get(ID).lineDataSet;
+        try {
+            return sensorMap.get(ID).lineDataSet;
+        }catch (NullPointerException e) {
+            return null;
+        }
     }
 
     /**
@@ -216,7 +223,7 @@ public class SensorData {
      * 查询指定ID的传感器名称。
      */
     public String getSensorName(Integer ID) {
-        return sensorNameList.get(ID);
+        return sensorNameListMap.get(ID);
     }
 
     /**
@@ -250,18 +257,20 @@ public class SensorData {
      */
     public static String getSendorDataMax(Integer ID) {
         Float max = sensorMap.get(ID).yMax;
-        if (max == Float.MAX_VALUE) {
-            return "";
-        } else
+        if (max != Float.MAX_VALUE) {
             return sensorMap.get(ID).yMax.toString();
+        } else{
+            return null;
+        }
     }
 
     public static String getSendorDataMin(Integer ID) {
         Float min = sensorMap.get(ID).yMin;
-        if (min == Float.MIN_VALUE) {
-            return "";
-        } else
-            return sensorMap.get(ID).yMin.toString();
+        if (min != Float.MIN_VALUE) {
+           return sensorMap.get(ID).yMin.toString();
+        } else{
+            return null;
+        }
     }
 
     public static Float getSensorDataAvr(Integer ID) {

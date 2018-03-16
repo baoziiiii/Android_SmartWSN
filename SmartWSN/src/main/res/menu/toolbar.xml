@@ -16,7 +16,7 @@
         android:icon="@drawable/bluetooth_small_icon"
         android:title="蓝牙连接"
         app:showAsAction="never"/>
-    <!--<item-->
-        <!--android:id="@+id/WriteNFC"-->
-        <!--android:title="WriteNFC" />-->
+    <item
+        android:id="@+id/WriteNFC"
+        android:title="WriteNFC" />
 </menu>

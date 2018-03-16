@@ -43,6 +43,7 @@
         android:layout_alignBottom="@+id/device_address"
         android:layout_marginStart="16dp"
         android:scaleType="fitCenter"
-        android:backgroundTint="@android:color/transparent"
+        android:backgroundTint="@color/cpb_white"
+        android:tint="@color/toolbarcolor"
         android:src="@drawable/ble_disconnect2" />
 </RelativeLayout>

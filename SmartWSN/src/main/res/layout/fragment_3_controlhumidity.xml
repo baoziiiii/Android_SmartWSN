@@ -1,29 +1,59 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent" android:layout_height="match_parent">
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="match_parent">
 
-        <Button
+        <com.dd.CircularProgressButton
             android:id="@+id/pump_on"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_alignParentStart="true"
             android:layout_alignParentTop="true"
-            android:layout_centerHorizontal="true"
-            android:text="开" />
+            android:layout_marginTop="66dp"
+            android:layout_marginStart="66dp"
+            android:textColor="@color/cpb_white"
+            android:textSize="15sp"
+            app:cpb_colorIndicator="@color/toolbarcolor"
+            app:cpb_cornerRadius="15dp"
+            app:cpb_selectorIdle="@drawable/idle_state_selector"
+            app:cpb_textIdle="开启水泵" />
 
-        <Button
+        <!--<Button-->
+        <!--android:id="@+id/pump_on"-->
+        <!--android:layout_width="wrap_content"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:layout_alignParentTop="true"-->
+        <!--android:layout_centerHorizontal="true"-->
+        <!--android:text="开" />-->
+
+        <com.dd.CircularProgressButton
             android:id="@+id/pump_off"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_alignStart="@+id/pump_on"
-            android:layout_below="@+id/pump_on"
-            android:text="关" />
+            android:layout_alignBaseline="@+id/pump_on"
+            android:layout_alignBottom="@+id/pump_on"
+            android:layout_alignParentEnd="true"
+            android:layout_marginEnd="61dp"
+            android:textColor="@color/cpb_white"
+            android:textSize="15sp"
+            app:cpb_colorIndicator="@color/blue"
+            app:cpb_cornerRadius="15dp"
+            app:cpb_selectorIdle="@drawable/idle_state_selector"
+            app:cpb_textIdle="关闭水泵" />
+        <!--<Button-->
+        <!--android:id="@+id/pump_off"-->
+        <!--android:layout_width="wrap_content"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:layout_alignStart="@+id/pump_on"-->
+        <!--android:layout_below="@+id/pump_on"-->
+        <!--android:text="关" />-->
 
     </RelativeLayout>
-
 
 
 </ScrollView>

@@ -4,7 +4,7 @@
     android:id="@+id/group"
     android:layout_width="match_parent"
     android:layout_height="50dp"
-    android:background="@color/bluedark">
+    android:background="@color/toolbarcolor">
 
     <ImageView
         android:id="@+id/dropdownmenu"

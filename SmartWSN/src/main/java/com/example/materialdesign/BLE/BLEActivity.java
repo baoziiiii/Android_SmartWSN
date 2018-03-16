@@ -134,6 +134,7 @@ public class BLEActivity extends AppCompatActivity {
                     if (mScanning) {
                         mScanning = false;
                         bt_ble_scan.setProgress(100);
+
                         bluetoothAdapter.stopLeScan(mLeScanCallback);
                        }
                 }

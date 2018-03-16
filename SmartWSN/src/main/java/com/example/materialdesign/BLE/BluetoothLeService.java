@@ -330,7 +330,7 @@ public class BluetoothLeService extends Service {
      *  将数据封装成characterstic发送。
      */
     public void WriteValue(byte[] bytes) {
-        if (mWriteCharacteristic != null) {
+        if (mBluetoothGatt!=null&&mWriteCharacteristic != null) {
             MyLog.i(MyLog.TAG,"Characteristic Write:"+bytes.toString());
             mWriteCharacteristic.setValue(bytes);
             mBluetoothGatt.writeCharacteristic(mWriteCharacteristic);

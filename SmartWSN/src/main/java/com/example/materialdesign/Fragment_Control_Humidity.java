@@ -8,6 +8,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 
+import com.dd.CircularProgressButton;
 import com.example.materialdesign.Graph.LineChartFactory;
 import com.example.materialdesign.Sensor.SensorControl.HumidityControl;
 import com.example.materialdesign.Sensor.SensorData;
@@ -33,8 +34,8 @@ public class Fragment_Control_Humidity extends Fragment {
             }
         }
     };
-    private Button pump_on;
-    private Button pump_off;
+    private CircularProgressButton pump_on;
+    private CircularProgressButton pump_off;
     private HumidityControl humidityControl;
 
     @Nullable

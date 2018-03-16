@@ -107,7 +107,7 @@ public class LineChartFactory {
         ChartNameMap.put("温湿度监测",CHART_TEMPERATURE_AND_HUMIDITY);
         ChartNameMap.put("CO2监测",CHART_CO2);
         ChartNameMap.put("光强监测",CHART_LIGHT);
-        ChartNameMap.put("风扇监测",CHART_FANSPEED);
+//        ChartNameMap.put("风扇监测",CHART_FANSPEED);
 
         Set<Map.Entry<String, Integer>> entrySet = ChartNameMap.entrySet();
         for (Map.Entry<String, Integer> entry : entrySet) {
@@ -119,13 +119,13 @@ public class LineChartFactory {
         sensorChartMapArrayList.add(new SensorChartMap(SENSOR_HUMIDTY,new Integer[]{CHART_TEMPERATURE_AND_HUMIDITY}));
         sensorChartMapArrayList.add(new SensorChartMap(SENSOR_CO2,new Integer[]{CHART_CO2}));
         sensorChartMapArrayList.add(new SensorChartMap(SENSOR_LIGHT,new Integer[]{CHART_LIGHT}));
-        sensorChartMapArrayList.add(new SensorChartMap(SENSOR_FAN,new Integer[]{CHART_FANSPEED}));
+//        sensorChartMapArrayList.add(new SensorChartMap(SENSOR_FAN,new Integer[]{CHART_FANSPEED}));
 
         //图表ID-包含的传感器ID （1对多）
         chartSensorMapArrayList.add(new ChartSensorMap(CHART_TEMPERATURE_AND_HUMIDITY,new Integer[]{SENSOR_TEMPERATURE,SENSOR_HUMIDTY}));
         chartSensorMapArrayList.add(new ChartSensorMap(CHART_CO2,new Integer[]{SENSOR_CO2}));
         chartSensorMapArrayList.add(new ChartSensorMap(CHART_LIGHT,new Integer[]{SENSOR_LIGHT}));
-        chartSensorMapArrayList.add(new ChartSensorMap(CHART_FANSPEED,new Integer[]{SENSOR_FAN}));
+//        chartSensorMapArrayList.add(new ChartSensorMap(CHART_FANSPEED,new Integer[]{SENSOR_FAN}));
         chartSensorMapArrayList.add(new ChartSensorMap(CHART_TEMPERATURE_CONTROL,new Integer[]{SENSOR_TEMPERATURE}));
         //TODO:在此建立传感器数据与图表关系
 
@@ -133,7 +133,7 @@ public class LineChartFactory {
         ChartLineChartFactoryMap.put(CHART_TEMPERATURE_AND_HUMIDITY,null);
         ChartLineChartFactoryMap.put(CHART_CO2,null);
         ChartLineChartFactoryMap.put(CHART_LIGHT,null);
-        ChartLineChartFactoryMap.put(CHART_FANSPEED,null);
+//        ChartLineChartFactoryMap.put(CHART_FANSPEED,null);
         ChartLineChartFactoryMap.put(CHART_TEMPERATURE_CONTROL,null);
         //TODO:图表复用
 
@@ -142,7 +142,7 @@ public class LineChartFactory {
         SensorColorMap.put(SENSOR_HUMIDTY,Color.parseColor("#40E0D0"));
         SensorColorMap.put(SENSOR_CO2,Color.parseColor("#F4D313"));
         SensorColorMap.put(SENSOR_LIGHT,Color.parseColor("#76EE00"));
-        SensorColorMap.put(SENSOR_FAN,Color.parseColor("#FF8C00"));
+//        SensorColorMap.put(SENSOR_FAN,Color.parseColor("#FF8C00"));
         //TODO:在此建立传感器数据的颜色
     }
 

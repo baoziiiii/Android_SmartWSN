@@ -39,9 +39,9 @@
         android:padding="5dp"
         android:textColor="@color/cpb_white"
         android:textSize="15sp"
-        app:cpb_colorIndicator="@color/blue"
+        app:cpb_colorIndicator="@color/toolbarcolor"
         app:cpb_cornerRadius="15dp"
         app:cpb_selectorIdle="@drawable/idle_state_selector"
-        app:cpb_textIdle="发送验证码" />
+        app:cpb_textIdle="注册" />
 
 </RelativeLayout>

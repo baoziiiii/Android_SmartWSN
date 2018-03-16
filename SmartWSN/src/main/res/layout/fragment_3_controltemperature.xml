@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 <RelativeLayout
     android:layout_width="wrap_content"
     android:layout_height="wrap_content">
@@ -27,14 +28,28 @@
             android:ems="10"
             android:inputType="numberDecimal"
             android:hint=""/>
-        <Button
+
+        <com.dd.CircularProgressButton
             android:id="@+id/settemperature"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignBottom="@+id/settemperature_textView"
             android:layout_alignParentEnd="true"
-            android:layout_marginEnd="26dp"
-            android:text="设置温度" />
+            android:layout_marginEnd="35dp"
+            android:textColor="@color/cpb_white"
+            android:textSize="18sp"
+            app:cpb_textIdle="设置温度"
+            app:cpb_cornerRadius="10dp"
+            app:cpb_colorIndicator="@color/toolbarcolor"
+            app:cpb_selectorIdle="@drawable/idle_state_selector"/>
+        <!--<Button-->
+            <!--android:id="@+id/settemperature"-->
+            <!--android:layout_width="wrap_content"-->
+            <!--android:layout_height="wrap_content"-->
+            <!--android:layout_alignBottom="@+id/settemperature_textView"-->
+            <!--android:layout_alignParentEnd="true"-->
+            <!--android:layout_marginEnd="26dp"-->
+            <!--android:text="设置温度" />-->
     </RelativeLayout>
 
     <RelativeLayout
@@ -55,51 +70,67 @@
             android:inputType="numberDecimal"
             android:hint="0~10"/>
 
-        <Button
+
+        <com.dd.CircularProgressButton
             android:id="@+id/setfanspeed"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignBottom="@+id/fanspeed"
             android:layout_alignParentEnd="true"
             android:layout_marginEnd="26dp"
-            android:text="设置风扇档位" />
+            android:textColor="@color/cpb_white"
+            android:padding="6dp"
+            android:textSize="17sp"
+            app:cpb_textIdle="设置风扇档位"
+            app:cpb_cornerRadius="10dp"
+            app:cpb_colorIndicator="@color/toolbarcolor"
+            app:cpb_selectorIdle="@drawable/idle_state_selector"/>
 
-        <com.github.mikephil.charting.charts.LineChart
-            android:id="@+id/fanchart"
-            android:layout_width="match_parent"
-            android:layout_height="300dp"
-            android:layout_below="@+id/fanspeed"
-            android:layout_centerHorizontal="true"
-            android:layout_marginTop="14dp" />
-        <GridLayout
-            android:id="@+id/fragment_3_gridlayout"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_below="@id/fanchart"
-            android:columnCount="12"
-            android:rowCount="2">
-            <Button
-                android:id="@+id/fragment_3_graph_fitAll"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_column="1"
-                android:layout_columnWeight="1"
-                android:text="总视图" />
+        <!--<Button-->
+            <!--android:id="@+id/setfanspeed"-->
+            <!--android:layout_width="wrap_content"-->
+            <!--android:layout_height="wrap_content"-->
+            <!--android:layout_alignBottom="@+id/fanspeed"-->
+            <!--android:layout_alignParentEnd="true"-->
+            <!--android:layout_marginEnd="26dp"-->
+            <!--android:text="设置风扇档位" />-->
 
-            <Button
-                android:id="@+id/fragment_3_graph_clear"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_columnWeight="1"
-                android:text="清空" />
+        <!--<com.github.mikephil.charting.charts.LineChart-->
+            <!--android:id="@+id/fanchart"-->
+            <!--android:layout_width="match_parent"-->
+            <!--android:layout_height="300dp"-->
+            <!--android:layout_below="@+id/fanspeed"-->
+            <!--android:layout_centerHorizontal="true"-->
+            <!--android:layout_marginTop="14dp" />-->
+        <!--<GridLayout-->
+            <!--android:id="@+id/fragment_3_gridlayout"-->
+            <!--android:layout_width="match_parent"-->
+            <!--android:layout_height="wrap_content"-->
+            <!--android:layout_below="@id/setfanspeed"-->
+            <!--android:columnCount="12"-->
+            <!--android:rowCount="2">-->
+            <!--<Button-->
+                <!--android:id="@+id/fragment_3_graph_fitAll"-->
+                <!--android:layout_width="wrap_content"-->
+                <!--android:layout_height="wrap_content"-->
+                <!--android:layout_column="1"-->
+                <!--android:layout_columnWeight="1"-->
+                <!--android:text="总视图" />-->
 
-            <Button
-                android:id="@+id/fragment_3_graph_setViewPort"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_columnWeight="1"
-                android:text="清空" />
-        </GridLayout>
+            <!--<Button-->
+                <!--android:id="@+id/fragment_3_graph_clear"-->
+                <!--android:layout_width="wrap_content"-->
+                <!--android:layout_height="wrap_content"-->
+                <!--android:layout_columnWeight="1"-->
+                <!--android:text="清空" />-->
+
+            <!--<Button-->
+                <!--android:id="@+id/fragment_3_graph_setViewPort"-->
+                <!--android:layout_width="wrap_content"-->
+                <!--android:layout_height="wrap_content"-->
+                <!--android:layout_columnWeight="1"-->
+                <!--android:text="清空" />-->
+        <!--</GridLayout>-->
 
 
         <RelativeLayout

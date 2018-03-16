@@ -24,7 +24,7 @@ import java.util.Locale;
  */
 public class WriteTextActivity extends BaseNfcActivity {
     public final static String prefix="G&QUIWHI|";
-    private String mText = prefix+"00:15:83:E0:15:6B";
+    private String mText = prefix+"00:15:87:00:A5:7E";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

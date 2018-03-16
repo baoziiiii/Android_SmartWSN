@@ -49,3 +49,6 @@ allprojects {
         maven { url "https://jitpack.io" }
     }
 }
+task showMeCache << {
+    configurations.compile.each { println it }
+}

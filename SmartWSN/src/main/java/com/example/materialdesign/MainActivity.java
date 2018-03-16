@@ -94,8 +94,6 @@ public class MainActivity extends AppCompatActivity {
     public final static int REQUEST_FOR_NFC_RESULT = 6;
     public final static int REQUEST_FOR_BLE_SCAN_RESULT = 7;
 
-    private final static Integer BLELoopPeriod = 5000;
-
     private DrawerLayout mDrawerLayout;
     private Boolean isDrag = false;
     private TabLayout tabLayout;
@@ -501,6 +499,8 @@ public class MainActivity extends AppCompatActivity {
         menu.add("扫描二维码").setIcon(R.drawable.qr_small_icon);
         menu.add("NFC").setIcon(R.drawable.nfc_small_icon);
         menu.add("蓝牙连接").setIcon(R.drawable.bluetooth_small_icon);
+        menu.add("WriteNFC").setIcon(R.drawable.nfc_small_icon);
+
         return true;
     }
 
@@ -693,8 +693,9 @@ public class MainActivity extends AppCompatActivity {
     };
 
 
+
     /**
-     * 开始BLE轮询:
+     * 开始BLE轮询（详见BLECommunication类）:
      * BLE轮询开始后，以固定周期(BLELoopPeriod)与BLE设备进行短暂连接，100ms后自动断开。
      */
     public void beginBLELoop() {
@@ -702,57 +703,22 @@ public class MainActivity extends AppCompatActivity {
         currentDevice.Switch = true;
         fab.setImageResource(R.drawable.fab_ble_connected);
         deviceListUpdate();
-        final Handler handler = new Handler() {
+        final Handler mHandler = new Handler(new Handler.Callback() {
             @Override
-            public void handleMessage(Message msg) {
-                if (msg.what == 1) {
-                    if (currentDevice.TryingToConnect) {
-                        currentDevice.TryingToConnectCount++;
-                    } else {
-                        currentDevice.TryingToConnectCount = 0;
-                    }
-                    if (currentDevice.TryingToConnectCount >= 4) { //连续4次连接失败
-                        currentDevice.Switch = false;
-                        Toast.makeText(context, "找不到设备:" + currentDevice.Name, Toast.LENGTH_SHORT).show();
-                        currentDevice.TryingToConnect = false;
-                        currentDevice.TryingToConnectCount = 0;
-                    }
-                    MyLog.i(MyLog.TAG, "beginBLELoop");
-                    if (currentDevice.MACAddress != null && mBluetoothLeService != null &&
-                            mBluetoothLeService.connect(currentDevice.MACAddress)) {
-                        currentDevice.TryingToConnect = true;
-                    } else {
-                        deviceListUpdate();
-                    }
+            public boolean handleMessage(Message msg) {
+                if(msg.what==0){
+                    Toast.makeText(MainActivity.this, "已断开设备:" + currentDevice.Name, Toast.LENGTH_SHORT).show();
+                    fab.setImageResource(R.drawable.fab_ble_disconnected);
+                    deviceListUpdate();
                 }
-                super.handleMessage(msg);
-            }
-        };
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                while (currentDevice.Switch) {
-                    Message message = null;
-                    try {
-                        message = handler.obtainMessage();
-                        message.what = 1;
-                        handler.sendMessage(message);
-                        Thread.sleep(BLELoopPeriod);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
+                else if(msg.what==1){
+                    deviceListUpdate();
                 }
-                currentDevice.Status = false;
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        Toast.makeText(MainActivity.this, "已断开设备:" + currentDevice.Name, Toast.LENGTH_SHORT).show();
-                        fab.setImageResource(R.drawable.fab_ble_disconnected);
-                        deviceListUpdate();
-                    }
-                });
+                return true;
             }
-        }).start();
+        });
+
+        BLECommunication.BLELoopTask(this,context,mBluetoothLeService,mHandler);
     }
 
     /**
@@ -804,7 +770,6 @@ public class MainActivity extends AppCompatActivity {
                     Log.e(MyLog.TAG, "CONNECTED when SWITCH IS OFF");
                     disconnectBLEConnection();
                 }
-
             }
             //断开连接
             else if (BluetoothLeService.ACTION_GATT_DISCONNECTED.equals(action)) { //�Ͽ�����
@@ -854,7 +819,7 @@ public class MainActivity extends AppCompatActivity {
     };
 
     /**
-     * 设备状态信息更新
+     * 设备列表更新
      */
     public void deviceListUpdate() {
         MyLog.i(MyLog.TAG, "deviceListUpdate");
@@ -885,7 +850,9 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        countThread.stop();
+        if(countThread!=null) {
+            countThread.stop();
+        }
         unregisterReceiver(mGattUpdateReceiver);
         unbindService(mServiceConnection);
         //this.unregisterReceiver(mGattUpdateReceiver);

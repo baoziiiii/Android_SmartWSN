@@ -137,13 +137,13 @@ public class Fragment_Control_Temperature extends Fragment {
                 }
             }
         });
-        chart_fanspeed = view.findViewById(R.id.fanchart);
-        chart_fanspeed.clear();
-        data.enableSensor(SENSOR_FAN);
-        fanLineChartFactory = new LineChartFactory(getActivity(), chart_fanspeed, LineChartFactory.CHART_FANSPEED);
-        fanLineData = fanLineChartFactory.getLineData();
-        chart_fanspeed = fanLineChartFactory.getLineChart();
-        chart_fanspeed.invalidate();
+//        chart_fanspeed = view.findViewById(R.id.fanchart);
+//        chart_fanspeed.clear();
+//        data.enableSensor(SENSOR_FAN);
+//        fanLineChartFactory = new LineChartFactory(getActivity(), chart_fanspeed, LineChartFactory.CHART_FANSPEED);
+//        fanLineData = fanLineChartFactory.getLineData();
+//        chart_fanspeed = fanLineChartFactory.getLineChart();
+//        chart_fanspeed.invalidate();
 
         return view;
     }

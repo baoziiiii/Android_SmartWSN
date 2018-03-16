@@ -22,7 +22,9 @@
             android:layout_weight="1"
             android:scaleType="fitCenter"
             android:backgroundTint="#FAFAFA"
-            android:src="@drawable/nfc" />
+            android:tint="@color/toolbarcolor"
+            android:src="@drawable/nfc"
+            />
 
 
 
@@ -34,6 +36,7 @@
             android:layout_weight="1"
             android:scaleType="fitCenter"
             android:backgroundTint="#FAFAFA"
+            android:tint="@color/toolbarcolor"
             android:src="@drawable/qr" />
         <ImageButton
             android:id="@+id/bt_BLE"
@@ -43,6 +46,7 @@
             android:layout_weight="1"
             android:scaleType="fitCenter"
             android:backgroundTint="#FAFAFA"
+            android:tint="@color/toolbarcolor"
             android:src="@drawable/bluetooth" />
 
     </LinearLayout>

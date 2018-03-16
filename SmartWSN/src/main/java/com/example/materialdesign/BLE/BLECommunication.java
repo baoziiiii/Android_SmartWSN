@@ -1,10 +1,16 @@
 package com.example.materialdesign.BLE;
 
+import android.app.Activity;
+import android.content.Context;
 import android.content.SharedPreferences;
+import android.os.Handler;
+import android.os.Message;
+import android.widget.Toast;
 
 import com.example.materialdesign.Global.ByteArrayUtils;
 import com.example.materialdesign.Global.MyLog;
 import com.example.materialdesign.Graph.LineChartFactory;
+import com.example.materialdesign.MainActivity;
 import com.example.materialdesign.Sensor.SensorControl.SensorControl;
 import com.example.materialdesign.Sensor.SensorData;
 import com.example.materialdesign.SharedPreferences.Config;
@@ -15,9 +21,20 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.example.materialdesign.Global.MyLog.TAG;
+
 /**
  * Created by B on 2018/2/22.
+ * ->因为蓝牙连接实际情况只能一对一，所以为了多个手机能和一个设备保持长时间的通信，考虑这样一种解决方案：
+ *   1.建立一种伪连接，建立后，每隔一个长时间(BLELoopPeriod可设置，默认2.5秒)与蓝牙设备建立一次100ms
+ *   (可设置)的短暂连接时间，100ms后无论通信是否完成立刻断开，即尽可能减少一个设备占用蓝牙设备通道的时间，
+ *   以供其连接其他手机。
+ *   2.如果手机连接时正好遇上蓝牙通道被占用，这时候需要一种抢占机制，即每隔50ms连续尝试连接。
+ *   3.只有尽可能缩短数据长度，才能缩短连接的时间，才能使更多设备同时连接成为可能。
+ * ->考虑到本项目手机端发送的数据多样性，以及手机端接收的数据的单一，所以发送和接收采用不同的数据格式
+ * ->通信尽可能简单，所以通信方式有两种：1.发送无接收。2.一次发送一次接收（一次接收能接收多个连续包，但必须是连续的）
  *
+ *-------------------------------发送数据格式------------------------------------
  * 最大支持128个传感器、
  * 自定义的数据传输格式：一个包数据称为一帧，一帧最大20个字节。一帧可以包含多条指令。一次连接可能会传送多个帧（即大于20个字节，会分包处理）。
  * 帧结构：2个字节帧夿若干个字节的数据段。数据段由主控制字及相应数据构成。帧头第一个字节确定数据长度。
@@ -38,14 +55,21 @@ import java.util.Map;
  * 111: 传送手机信息。3 ~ 7位 0000:手机号，0001:设备号IMEI。数据String类型，长度16个字节。
  * 【【第二条指令(根据帧头字节2判断)】】
  * 同上...
+ *
+ *-------------------------------接收数据格式------------------------------------
+ *字节1{ 0 ~ 5 位：传感器ID
+ *	    6 ~ 7位数据类型 00:int(4字节，传感器监测值) 01:float(4字节，传感器监测值) 10:String(19字节，传感器名称)
+ *	    11:char(1字节，传感器状态) }
  */
 
 /**
- *  BLE数据通信类
+ *  BLE数据格式化类
  *  ->负责将功能翻译成自定义蓝牙数据格式。
  *  ->负责将收到的自定义蓝牙数据格式翻译成显式数据。
  */
 public class BLECommunication {
+
+    private final static Integer BLELoopPeriod = 2500;
 
     public static final int TYPE_INT = 0;
     public static final int TYPE_FLOAT = 1;
@@ -53,6 +77,59 @@ public class BLECommunication {
     public static final int TYPE_CHAR = 3;
 
     private static boolean requestDataFlag;
+
+    /**
+     * BLE设备轮询线程:当前配对设备的控制开关Switch=true时，将每隔BLELoopPeriod的周期进行一次100ms的短暂数据通信，
+     * 如果连接失败，将以50ms的周期进行抢占式连接，如果连续100次连接失败，说明BLE设备阻塞严重或者BLE设备不在可连接范围，
+     * 应当停止继续尝试连接。
+     */
+    public static void BLELoopTask(final Activity activity, final Context context, final BluetoothLeService mBluetoothLeService, final Handler mHandler){
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                final BLEDeviceInfo currentDevice = BLEDeviceManager.getCurrentBLEDevice();
+                Message message;
+                while (currentDevice.Switch) {
+                    try {
+                        MyLog.i(MyLog.TAG, "beginBLELoop");
+                        if (currentDevice.MACAddress != null && mBluetoothLeService != null &&
+                                mBluetoothLeService.connect(currentDevice.MACAddress)) {
+                            currentDevice.TryingToConnect = true;
+                        } else {
+                            message=Message.obtain();
+                            message.what=1;
+                            mHandler.sendMessage(message);
+                        }
+                        Thread.sleep(50);          //50ms后继续尝试连接。
+                        if (currentDevice.TryingToConnect) { //上一次尝试连接未成功
+                            currentDevice.TryingToConnectCount++;
+                        } else {                         //连接成功
+                            currentDevice.TryingToConnectCount = 0;
+                            Thread.sleep(BLELoopPeriod); //延时2.5秒
+                        }
+                        if (currentDevice.TryingToConnectCount >= 100) { //连续100次连接失败。即50*100ms=5s都连接不上，则停止继续连接。
+                            currentDevice.Switch = false;
+                            currentDevice.TryingToConnect = false;
+                            currentDevice.TryingToConnectCount = 0;
+                            activity.runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    Toast.makeText(context, "找不到设备:" + currentDevice.Name, Toast.LENGTH_SHORT).show();
+                                }
+                            });
+                        }
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+                //Switch=false，退出循环。
+                currentDevice.Status = false;
+                message=Message.obtain();
+                message.what=0;
+                mHandler.sendMessage(message);
+            }
+        }).start();
+    }
 
     /**
      * 主控制字:000
@@ -137,6 +214,9 @@ public class BLECommunication {
 //        String SIM=config.getSIM();
         if (phone!=null) {
             databytes = phone.getBytes();
+            if(databytes.length>16){
+                return false;
+            }
             bytes[0] = 0x7;
             System.arraycopy(databytes, 0, bytes, 1, databytes.length);
             setRequestBuffer(bytes);
@@ -253,8 +333,16 @@ public class BLECommunication {
             }
             i += dataLength;
         }
-        SensorData.updateDataToList(builder.toString());
-        SensorData.notifyLineChart(LineChartFactory.getLineChartFactories(LineChartFactory.findChartIDs(IDs)));
-        return builder.toString();
+        if(!builder.toString().isEmpty()) {
+            try {
+                SensorData.updateDataToList(builder.toString());
+                SensorData.notifyLineChart(LineChartFactory.getLineChartFactories(LineChartFactory.findChartIDs(IDs)));
+                return builder.toString();
+            }
+            catch (IndexOutOfBoundsException e){
+                MyLog.e(TAG,"IndexOutOfBoundsException");
+            }
+        }
+        return null;
     }
 }
