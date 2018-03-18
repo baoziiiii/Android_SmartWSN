@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">SmartWSNApp</string>
+    <string name="Upload">Upload</string>
+    <string name="Complete">Complete</string>
+    <string name="Error">Error</string>
+
+</resources>

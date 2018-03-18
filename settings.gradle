@@ -1,0 +1,1 @@
+include ':app', ':libzxing', ':SmartWSN', ':circular-progress-button', ':circular-progress-button-library', ':ExpandableRecylerView'
