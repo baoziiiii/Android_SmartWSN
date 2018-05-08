@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.materialdesign">
+    package="com.example.qq452651705">
 
-    <uses-permission android:name="android.permission.SEND_SMS"/>
-    <uses-permission android:name="android.permission.READ_PHONE_STATE"/>
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.SEND_SMS" />
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.NFC" />
     <uses-permission android:name="android.permission.BLUETOOTH" />
@@ -11,6 +12,7 @@
     <uses-permission android:name="android.permission.BLUETOOTH" />
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.INTERNET" />
     <!-- Needed only if your app targets Android 5.0 (API level 21) or higher. -->
     <uses-feature android:name="android.hardware.location.gps" />
     <uses-feature
@@ -21,44 +23,52 @@
         android:required="true" />
 
     <application
-        android:name=".Global.MyApplication"
+        android:name="com.example.qq452651705.Global.MyApplication"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-
-        <activity android:name=".MainActivity"
-            android:screenOrientation="portrait" >
+        <activity
+            android:name="com.example.qq452651705.MainActivity"
+            android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
         <activity
-            android:name=".NFC.ReadTextActivity"
+            android:name="com.example.qq452651705.Account.LoginAcitivity"
+            android:theme="@style/Theme.AppCompat.Dialog.NoTitleBar" />
+
+        <activity
+            android:name="com.example.qq452651705.Account.RegisterActivity"
+            android:theme="@style/Theme.AppCompat.Dialog.NoTitleBar" />
+        <activity
+            android:name="com.example.qq452651705.NFC.ReadTextActivity"
             android:launchMode="singleTop">
             <intent-filter>
-            <action android:name="android.nfc.action.NDEF_DISCOVERED" />
-            <category android:name="android.intent.category.DEFAULT" />
+                <action android:name="android.nfc.action.NDEF_DISCOVERED" />
+
+                <category android:name="android.intent.category.DEFAULT" />
 
                 <data android:mimeType="text/plain" />
             </intent-filter>
         </activity>
-
         <activity
-            android:name=".NFC.WriteTextActivity"
+            android:name="com.example.qq452651705.NFC.WriteTextActivity"
             android:launchMode="singleTop">
             <intent-filter>
                 <action android:name="android.nfc.action.TAG_DISCOVERED" />
+
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
 
         <provider
             android:name="android.support.v4.content.FileProvider"
-            android:authorities="com.example.materialdesign"
+            android:authorities="com.example.qq452651705"
             android:exported="false"
             android:grantUriPermissions="true">
             <meta-data
@@ -66,12 +76,14 @@
                 android:resource="@xml/file_paths" />
         </provider>
 
-        <activity android:name=".BLE.BLEActivity" />
-        <activity android:name=".BLE.DeviceControlActivity" />
+        <activity android:name="com.example.qq452651705.BLE.BLEActivity" />
+        <activity android:name="com.example.qq452651705.Global.DeviceControlActivity" />
 
         <service
-            android:name=".BLE.BluetoothLeService"
+            android:name="com.example.qq452651705.BLE.BluetoothLeService"
             android:enabled="true"
             android:exported="true" />
+
     </application>
+
 </manifest>

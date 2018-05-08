@@ -2,11 +2,10 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/ExpandableRecylerView/ExpandableRecylerView.iml" filepath="$PROJECT_DIR$/ExpandableRecylerView/ExpandableRecylerView.iml" />
+      <module fileurl="file://$PROJECT_DIR$/SmartWSN.iml" filepath="$PROJECT_DIR$/SmartWSN.iml" />
       <module fileurl="file://$PROJECT_DIR$/SmartWSN/SmartWSN.iml" filepath="$PROJECT_DIR$/SmartWSN/SmartWSN.iml" />
+      <module fileurl="file://$PROJECT_DIR$/SmartWSN/SmartWSN-SmartWSN.iml" filepath="$PROJECT_DIR$/SmartWSN/SmartWSN-SmartWSN.iml" />
       <module fileurl="file://$PROJECT_DIR$/SmartWSNApp.iml" filepath="$PROJECT_DIR$/SmartWSNApp.iml" />
-      <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
-      <module fileurl="file://$PROJECT_DIR$/circular-progress-button/circular-progress-button.iml" filepath="$PROJECT_DIR$/circular-progress-button/circular-progress-button.iml" />
       <module fileurl="file://$PROJECT_DIR$/circular-progress-button-library/circular-progress-button-library.iml" filepath="$PROJECT_DIR$/circular-progress-button-library/circular-progress-button-library.iml" />
       <module fileurl="file://C:\Users\MSI\AndroidStudioProjects\SmartWSNApp\circular-progress-button-library\library.iml" filepath="C:\Users\MSI\AndroidStudioProjects\SmartWSNApp\circular-progress-button-library\library.iml" />
       <module fileurl="file://$PROJECT_DIR$/libzxing/libzxing.iml" filepath="$PROJECT_DIR$/libzxing/libzxing.iml" />

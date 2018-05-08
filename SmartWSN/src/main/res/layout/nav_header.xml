@@ -7,34 +7,12 @@
     android:background="@color/colorPrimary"
     android:padding="10dp">
 
-    <de.hdodenhof.circleimageview.CircleImageView
-        android:id="@+id/icon_image"
-        android:layout_width="70dp"
-        android:layout_height="70dp"
-        android:layout_above="@+id/et_phone"
-        android:layout_centerHorizontal="true"
-        android:layout_marginBottom="17dp"
-        android:src="@drawable/nav_icon" />
-
-    <EditText
-        android:id="@+id/et_phone"
-        android:layout_width="250sp"
-        android:layout_height="50dp"
-        android:layout_alignEnd="@+id/icon_image"
-        android:layout_alignParentBottom="true"
-        android:layout_marginEnd="24dp"
-        android:hint="在这里输入手机号"
-        android:inputType="phone"
-        android:textColor="@color/cpb_white"
-        android:textColorHint="@color/cpb_white"
-        android:textSize="13dp" />
-
     <com.dd.CircularProgressButton
-        android:id="@+id/bt_verify"
+        android:id="@+id/bt_nav_login"
         android:layout_width="100dp"
         android:layout_height="40dp"
         android:layout_alignParentBottom="true"
-        android:layout_toEndOf="@+id/et_phone"
+        android:layout_centerHorizontal="true"
         android:gravity="center"
         android:padding="5dp"
         android:textColor="@color/cpb_white"
@@ -42,6 +20,43 @@
         app:cpb_colorIndicator="@color/toolbarcolor"
         app:cpb_cornerRadius="15dp"
         app:cpb_selectorIdle="@drawable/idle_state_selector"
-        app:cpb_textIdle="注册" />
+        app:cpb_textIdle="登陆" />
+
+    <de.hdodenhof.circleimageview.CircleImageView
+        android:id="@+id/icon_image"
+        android:layout_width="70dp"
+        android:layout_height="70dp"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="29dp"
+        android:src="@drawable/nav_icon" />
+
+    <com.dd.CircularProgressButton
+        android:id="@+id/bt_delogin"
+        android:layout_width="100dp"
+        android:layout_height="40dp"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentEnd="true"
+        android:gravity="center"
+        android:padding="5dp"
+        android:textColor="@color/cpb_white"
+        android:textSize="15sp"
+        app:cpb_colorIndicator="@color/toolbarcolor"
+        app:cpb_cornerRadius="15dp"
+        app:cpb_selectorIdle="@drawable/idle_state_selector"
+        app:cpb_textIdle="切换账号" />
+
+    <TextView
+        android:id="@+id/welcome"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentStart="true"
+        android:layout_marginStart="13dp"
+        android:layout_marginBottom="5dp"
+        android:maxWidth="200dp"
+        android:text="欢迎，"
+        android:textColor="@color/cpb_white"
+        android:textSize="15sp" />
 
 </RelativeLayout>
