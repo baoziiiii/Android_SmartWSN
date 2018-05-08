@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.example.qq452651705.Account.RegisterActivity"
+    tools:layout_editor_absoluteX="16dp"
+    tools:layout_editor_absoluteY="16dp">
+
+    <EditText
+        android:id="@+id/reg_username"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentEnd="true"
+        android:layout_below="@+id/reg_close"
+        android:layout_marginEnd="25dp"
+        android:layout_toStartOf="@+id/reg_close"
+        android:ems="10"
+        android:hint="请输入11位手机号"
+        android:inputType="textPersonName" />
+
+    <EditText
+        android:id="@+id/reg_password"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignStart="@+id/reg_username"
+        android:layout_below="@+id/reg_username"
+        android:ems="10"
+        android:inputType="textPassword" />
+
+
+    <EditText
+        android:id="@+id/reg_password2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/textView9"
+        android:layout_marginTop="12dp"
+        android:layout_toEndOf="@+id/textView8"
+        android:ems="10"
+        android:inputType="textPassword" />
+
+
+    <EditText
+        android:id="@+id/vericode"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/reg_password2"
+        android:layout_toEndOf="@+id/textView7"
+        android:ems="10"
+        android:inputType="number" />
+
+    <TextView
+        android:id="@+id/textView6"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBaseline="@+id/reg_username"
+        android:layout_alignBottom="@+id/reg_username"
+        android:layout_alignStart="@+id/textView7"
+        android:text="账号"
+        android:textSize="17sp" />
+
+    <TextView
+        android:id="@+id/textView9"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBaseline="@+id/reg_password"
+        android:layout_alignBottom="@+id/reg_password"
+        android:layout_alignStart="@+id/textView6"
+        android:text="密码"
+        android:textSize="17sp" />
+
+
+    <TextView
+        android:id="@+id/textView8"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBaseline="@+id/reg_password2"
+        android:layout_alignBottom="@+id/reg_password2"
+        android:layout_marginStart="5dp"
+        android:layout_toStartOf="@+id/reg_password"
+        android:text="确认密码"
+        android:textSize="16sp" />
+
+
+    <TextView
+        android:id="@+id/textView7"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBaseline="@+id/vericode"
+        android:layout_alignBottom="@+id/vericode"
+        android:layout_alignEnd="@+id/textView8"
+        android:text="验证码"
+        android:textSize="17sp" />
+
+    <Button
+        android:id="@+id/reg_close"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:layout_alignParentEnd="true"
+        android:layout_marginEnd="12dp"
+        android:background="@drawable/close"/>
+
+
+    <com.dd.CircularProgressButton
+        android:id="@+id/bt_reg_confirm"
+        android:layout_width="90dp"
+        android:layout_height="45dp"
+        android:layout_alignBaseline="@+id/bt_reg_vericode"
+        android:layout_alignBottom="@+id/bt_reg_vericode"
+        android:layout_marginStart="29dp"
+        android:layout_toEndOf="@+id/bt_reg_vericode"
+        android:textColor="@color/cpb_white"
+        android:textSize="15sp"
+        app:cpb_colorIndicator="@color/toolbarcolor"
+        app:cpb_cornerRadius="15dp"
+        app:cpb_selectorIdle="@drawable/idle_state_selector"
+        app:cpb_textIdle="注册" />
+
+    <com.dd.CircularProgressButton
+        android:id="@+id/bt_reg_vericode"
+        android:layout_width="90dp"
+        android:layout_height="45dp"
+        android:layout_alignStart="@+id/textView9"
+        android:layout_below="@+id/vericode"
+        android:layout_marginStart="24dp"
+        android:layout_marginTop="14dp"
+        android:textColor="@color/cpb_white"
+        android:textSize="15sp"
+        app:cpb_colorIndicator="@color/toolbarcolor"
+        app:cpb_cornerRadius="15dp"
+        app:cpb_selectorIdle="@drawable/idle_state_selector"
+        app:cpb_textIdle="获取验证码" />
+
+
+</RelativeLayout>

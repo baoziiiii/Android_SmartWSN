@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:layout_editor_absoluteY="25dp">
+
+
+    <EditText
+        android:id="@+id/username"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignStart="@+id/password"
+        android:layout_below="@+id/login_close"
+        android:ems="10"
+        android:hint="请输入11位手机号"
+        android:inputType="textPersonName"
+        tools:layout_editor_absoluteX="113dp"
+        tools:layout_editor_absoluteY="74dp" />
+
+    <EditText
+        android:id="@+id/password"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentEnd="true"
+        android:layout_below="@+id/username"
+        android:layout_marginEnd="30dp"
+        android:ems="10"
+        android:inputType="textPassword"
+        tools:layout_editor_absoluteX="113dp"
+        tools:layout_editor_absoluteY="120dp" />
+
+    <TextView
+        android:id="@+id/textView6"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBaseline="@+id/username"
+        android:layout_alignBottom="@+id/username"
+        android:layout_alignStart="@+id/textView9"
+        android:text="账号"
+        android:textSize="17sp"
+        tools:layout_editor_absoluteX="44dp"
+        tools:layout_editor_absoluteY="74dp" />
+
+    <TextView
+        android:id="@+id/textView9"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBaseline="@+id/password"
+        android:layout_alignBottom="@+id/password"
+        android:layout_marginStart="20dp"
+        android:layout_marginEnd="15dp"
+        android:layout_toStartOf="@+id/password"
+        android:text="密码"
+        android:textSize="17sp"
+        tools:layout_editor_absoluteX="44dp"
+        tools:layout_editor_absoluteY="120dp" />
+
+    <com.dd.CircularProgressButton
+        android:id="@+id/bt_login"
+        android:layout_width="70dp"
+        android:layout_height="40dp"
+        android:layout_alignBottom="@+id/bt_register"
+        android:layout_marginStart="21dp"
+        android:layout_toEndOf="@+id/bt_register"
+        android:textColor="@color/cpb_white"
+        android:textSize="13sp"
+        app:cpb_colorIndicator="@color/toolbarcolor"
+        app:cpb_cornerRadius="15dp"
+        app:cpb_selectorIdle="@drawable/idle_state_selector"
+        app:cpb_textIdle="登陆"
+        tools:layout_editor_absoluteX="78dp"
+        tools:layout_editor_absoluteY="189dp" />
+
+    <com.dd.CircularProgressButton
+        android:id="@+id/bt_register"
+        android:layout_width="70dp"
+        android:layout_height="40dp"
+        android:layout_alignStart="@+id/textView9"
+        android:layout_below="@+id/password"
+        android:layout_marginStart="12dp"
+        android:layout_marginTop="13dp"
+        android:textColor="@color/cpb_white"
+        android:textSize="13sp"
+        app:cpb_colorIndicator="@color/toolbarcolor"
+        app:cpb_cornerRadius="15dp"
+        app:cpb_selectorIdle="@drawable/idle_state_selector"
+        app:cpb_textIdle="注册"
+        tools:layout_editor_absoluteX="217dp"
+        tools:layout_editor_absoluteY="190dp" />
+
+    <com.dd.CircularProgressButton
+        android:id="@+id/bt_forget"
+        android:layout_width="70dp"
+        android:layout_height="40dp"
+        android:layout_alignEnd="@+id/password"
+        android:layout_alignTop="@+id/bt_login"
+        android:textColor="@color/cpb_white"
+        android:textSize="13sp"
+        app:cpb_colorIndicator="@color/toolbarcolor"
+        app:cpb_cornerRadius="16dp"
+        app:cpb_selectorIdle="@drawable/idle_state_selector"
+        app:cpb_textIdle="找回密码"
+        tools:layout_editor_absoluteX="217dp"
+        tools:layout_editor_absoluteY="190dp" />
+
+    <Button
+        android:id="@+id/login_close"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentTop="true"
+        android:background="@drawable/close"
+        tools:layout_editor_absoluteX="325dp"
+        tools:layout_editor_absoluteY="12dp" />
+
+    <Space
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignStart="@+id/password"
+        android:layout_below="@+id/bt_register"
+        android:layout_marginBottom="20dp"
+        android:layout_marginTop="11dp" />
+
+</RelativeLayout>

@@ -19,7 +19,6 @@ import okhttp3.Request;
 /**
  * Created by baowenqiang on 2018/5/5.
  */
-
 public class CloudServerConnection {
     private final static String url="http://47.94.168.153:8080/JsonTest/";
 
@@ -39,7 +38,7 @@ public class CloudServerConnection {
     public Boolean checkNetworkStatus(){
         ConnectivityManager mConnectivityManager = (ConnectivityManager) MyApplication.getInstance()
                 .getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo mNetworkInfo = mConnectivityaManager.getActiveNetworkInfo();
+        NetworkInfo mNetworkInfo = mConnectivityManager.getActiveNetworkInfo();
         if (mNetworkInfo != null) {
             return mNetworkInfo.isAvailable();
         }
