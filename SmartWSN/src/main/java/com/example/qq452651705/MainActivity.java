@@ -1,6 +1,7 @@
 package com.example.qq452651705;
 
 import android.Manifest;
+import android.accounts.Account;
 import android.app.Activity;
 import android.bluetooth.BluetoothDevice;
 import android.content.BroadcastReceiver;
@@ -76,11 +77,17 @@ import static com.example.qq452651705.Sensor.SensorData.SENSOR_WIND;
 import static com.example.qq452651705.Sensor.SensorData.SENSOR_HUMIDTY;
 import static com.example.qq452651705.Sensor.SensorData.SENSOR_LIGHT;
 import static com.example.qq452651705.Sensor.SensorData.SENSOR_TEMPERATURE;
+import static com.example.qq452651705.Sensor.SensorData.SENSOR_WINDDIR;
 
 public class MainActivity extends AppCompatActivity {
 
     private final static String SOURCE_ACTIVITY = MainActivity.class.getName();
 
+
+    /**
+     *  请求码。用于使用startActivityForResult打开其他页面获取结果，在回调方法onActivityResult中通过请求码区分结果的来源
+     *
+     */
     private final static int REQUEST_FOR_PERMISSION = 0;
     //    private final static int REQUEST_FOR_QR_RESULT = 1;
     private final static int TAKE_PHOTO_FOR_HEAD_ICON = 2;
@@ -92,8 +99,8 @@ public class MainActivity extends AppCompatActivity {
     public final static int REQUEST_FOR_LOGIN = 8;
     public final static int TAKE_PHOTO_FOR_SHARE = 9;
 
+
     private DrawerLayout mDrawerLayout;
-    private Boolean isDrag = false;
     private TabLayout tabLayout;
     private ViewPager viewPager;
     private Toolbar toolbar;
@@ -118,6 +125,10 @@ public class MainActivity extends AppCompatActivity {
     private CircularProgressButton bt_delogin;
     private TextView welcometext;
 
+
+    /**
+     *  页面初始化，在打开该页面时调用
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -125,37 +136,38 @@ public class MainActivity extends AppCompatActivity {
         context = this;
         sourceIntent = getIntent();
         config = Config.getInstance(this);
+
+        //设置缓存目录
         setCachefile();
+
+        //初始化组件
         createFloatingButton();
         createToolBar();
         createTabLayout();
         createNavigationView();
         createHeadIcon(config.getHeadIconSource(false), false);
 
+        //绑定蓝牙服务BluetoothLeService
         Intent gattServiceIntent = new Intent(this, BluetoothLeService.class);
         MyLog.d(MyLog.TAG, "Try to bindService=" + bindService(gattServiceIntent, mServiceConnection, BIND_AUTO_CREATE));
         registerReceiver(mGattUpdateReceiver, makeGattUpdateIntentFilter());
 
+
+        //检查蓝牙、位置权限。Android 6.0以后，蓝牙功能要求同时具有位置权限
         PermissionHandler.checkPermission(this,
                 new String[]{
                         Manifest.permission.ACCESS_COARSE_LOCATION,
                         Manifest.permission.BLUETOOTH,
                         Manifest.permission.ACCESS_FINE_LOCATION,
-                        Manifest.permission.READ_PHONE_STATE,
-                        Manifest.permission.SEND_SMS}
+//                        Manifest.permission.READ_PHONE_STATE,
+//                        Manifest.permission.SEND_SMS
+                }
                 , REQUEST_FOR_PERMISSION);
-
-        getPhoneInfo();
-
-        sensorData.enableSensor(SENSOR_TEMPERATURE);
-        sensorData.enableSensor(SENSOR_HUMIDTY);
-        sensorData.enableSensor(SENSOR_WIND);
-        sensorData.enableSensor(SENSOR_LIGHT);
+//        getPhoneInfo();
     }
 
     /**
      * 设置头像缓存路径
-     *
      * @param
      */
     public void setCachefile() {
@@ -203,42 +215,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    public void handleCameraCapture(){
-        Bitmap temp;
-        try {
-            temp = BitmapFactory.decodeStream(getContentResolver().openInputStream(uri_capture));
-            Intent share_intent = new Intent();
-            share_intent.setAction(Intent.ACTION_SEND);//设置分享行为
-            share_intent.setType("image/*");  //设置分享内容的类型
-            share_intent.putExtra(Intent.EXTRA_TEXT, "我下载了智能无线传感器网络APP！很好玩哦！");
-            share_intent.putExtra(Intent.EXTRA_STREAM, uri_capture);
-            startActivity(Intent.createChooser(share_intent, getTitle()));
-        } catch (Exception e) {
-            Toast.makeText(this, "图片获取失败", Toast.LENGTH_SHORT).show();
-        }
-    }
-
-
-
     /**
-     * 初始化标题栏
+     * 初始化侧滑视图
      */
-
-    public void createToolBar() {
-        toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-        ActionBar actionBar = getSupportActionBar();
-        if (actionBar != null) {
-            actionBar.setDisplayHomeAsUpEnabled(true);
-            actionBar.setHomeAsUpIndicator(R.mipmap.ic_menu);
-        }
-    }
-
-    /**
-     * 初始化导航视图
-     */
-//    private String email;
-//    private String username;
     public void createNavigationView() {
         mDrawerLayout = findViewById(R.id.drawerlayout);
         navigationView = findViewById(R.id.nav_view);
@@ -251,13 +230,11 @@ public class MainActivity extends AppCompatActivity {
             }
         });
         View nav_header = navigationView.getHeaderView(0);
-//        final EditText et_username = nav_header.findViewById(R.id.username);
-//        final EditText et_email = nav_header.findViewById(R.id.mail);
+
+        //头像
         iv_headicon = nav_header.findViewById(R.id.icon_image);
-//        email = config.getString("email", "");
-//        username = config.getString("username", "");
-//        et_email.setText(email);
-//        et_username.setText(username);
+
+        //头像长按弹出菜单
         iv_headicon.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
@@ -267,6 +244,7 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public boolean onMenuItemClick(MenuItem item) {
                         switch (item.getItemId()) {
+                            //拍照获取头像
                             case R.id.fromcamera: {
                                 if (PermissionHandler.checkPermission(MainActivity.this, new String[]{Manifest.permission.CAMERA}, REQUEST_FOR_PERMISSION)) {
                                     Intent openCamera = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
@@ -275,6 +253,7 @@ public class MainActivity extends AppCompatActivity {
                                 }
                             }
                             break;
+                            //相册获取头像
                             case R.id.fromgallery:
                                 if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
                                     if (PermissionHandler.checkPermission(MainActivity.this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_FOR_PERMISSION)) {
@@ -294,61 +273,21 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-       MenuItem shareItem=navigationView.getMenu().findItem(R.id.nav_friends);
-       shareItem.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
-           @Override
-           public boolean onMenuItemClick(MenuItem item) {
-               Intent intent=new Intent(Intent.ACTION_SEND);
-               intent.setType("image/*");
-               intent.putExtra(Intent.EXTRA_SUBJECT, "Share");
-               intent.putExtra(Intent.EXTRA_TEXT, "我下载了智能无线传感器网络APP！很好玩哦！");
-               intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-               startActivity(Intent.createChooser(intent, getTitle()));
-
-               return true;
-           }
-       });
-
-       MenuItem mapItem=navigationView.getMenu().findItem(R.id.nav_location);
-        mapItem.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
-            @Override
-            public boolean onMenuItemClick(MenuItem item) {
-                Uri mapUri = Uri.parse("geo:31.057160,121.215740");
-                Intent mapintent = new Intent(Intent.ACTION_VIEW, mapUri);
-                startActivity(mapintent);
-                return true;
-            }
-        });
-
-
-        MenuItem cameraItem=navigationView.getMenu().findItem(R.id.nav_camera);
-        cameraItem.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
-            @Override
-            public boolean onMenuItemClick(MenuItem item) {
-                if (PermissionHandler.checkPermission(MainActivity.this, new String[]{Manifest.permission.CAMERA}, REQUEST_FOR_PERMISSION)) {
-                    Intent openCamera = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-                    openCamera.putExtra(MediaStore.EXTRA_OUTPUT, uri_capture);
-                    startActivityForResult(openCamera, TAKE_PHOTO_FOR_SHARE);
-                }
-                return true;
-            }
-        });
-
-        MenuItem homepage=navigationView.getMenu().findItem(R.id.nav_homepage);
-        homepage.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
-            @Override
-            public boolean onMenuItemClick(MenuItem item) {
-                Uri uri = Uri.parse("http://www.dhu.edu.cn");
-                Intent intent = new Intent(Intent.ACTION_VIEW, uri);
-                startActivity(intent);
-                return true;
-            }
-        });
-
-
+        //欢迎文字
         welcometext = nav_header.findViewById(R.id.welcome);
         welcometext.setText("欢迎，\n");
         welcometext.setVisibility(View.INVISIBLE);
+
+        //登陆按钮
+        bt_nav_login = nav_header.findViewById(R.id.bt_nav_login);
+        bt_nav_login.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivityForResult(new Intent(MainActivity.this,LoginAcitivity.class),REQUEST_FOR_LOGIN);
+            }
+        });
+
+        //注销按钮
         bt_delogin = nav_header.findViewById(R.id.bt_delogin);
         bt_delogin.setVisibility(View.INVISIBLE);
         bt_delogin.setOnClickListener(new View.OnClickListener() {
@@ -362,132 +301,91 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        bt_nav_login = nav_header.findViewById(R.id.bt_nav_login);
-        bt_nav_login.setOnClickListener(new View.OnClickListener() {
+
+
+        //"分享"菜单
+       MenuItem shareItem=navigationView.getMenu().findItem(R.id.nav_friends);
+       shareItem.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+           @Override
+           public boolean onMenuItemClick(MenuItem item) {
+               //触发支持分享功能的其他app
+               Intent intent=new Intent(Intent.ACTION_SEND);
+               intent.setType("image/*");
+               intent.putExtra(Intent.EXTRA_SUBJECT, "Share");
+               intent.putExtra(Intent.EXTRA_TEXT, "我下载了智能无线传感器网络APP！很好玩哦！");
+               intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+               startActivity(Intent.createChooser(intent, getTitle()));
+               return true;
+           }
+       });
+
+       //"地图"菜单
+       MenuItem mapItem=navigationView.getMenu().findItem(R.id.nav_location);
+        mapItem.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
             @Override
-            public void onClick(View v) {
-                startActivityForResult(new Intent(MainActivity.this,LoginAcitivity.class),REQUEST_FOR_LOGIN);
+            public boolean onMenuItemClick(MenuItem item) {
+                //触发其他地图app
+                Uri mapUri = Uri.parse("geo:31.057160,121.215740");
+                Intent mapintent = new Intent(Intent.ACTION_VIEW, mapUri);
+                startActivity(mapintent);
+                return true;
             }
         });
 
+        //"相机"菜单
+        MenuItem cameraItem=navigationView.getMenu().findItem(R.id.nav_camera);
+        cameraItem.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                //触发相机功能，获取相机结果
+                if (PermissionHandler.checkPermission(MainActivity.this, new String[]{Manifest.permission.CAMERA}, REQUEST_FOR_PERMISSION)) {
+                    Intent openCamera = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                    openCamera.putExtra(MediaStore.EXTRA_OUTPUT, uri_capture);
+                    startActivityForResult(openCamera, TAKE_PHOTO_FOR_SHARE);
+                }
+                return true;
+            }
+        });
 
-
-//        final EditText et_phone = nav_header.findViewById(R.id.et_phone);
-//        final CircularProgressButton bt_nav_login = nav_header.findViewById(R.id.bt_nav_login);
-//        et_phone.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//                et_phone.setCursorVisible(true);
-//            }
-//        });
-//        bt_nav_login.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//                startActivity(new Intent(MainActivity.this,LoginAcitivity.class));
-//
-//            }
-//        });
-
-//        bt_nav_login.setOnClickListener(new View.OnClickListener() {
-//            private Handler mCount;
-//
-//            @Override
-//            public void onClick(View v) {
-//                BLEDeviceInfo currentDevice = BLEDeviceManager.getCurrentBLEDevice();
-//                if (currentDevice != null && currentDevice.Status == true) {
-//                    String phoneNumber = et_phone.getText().toString();
-//                    phoneNumber.replaceAll("\\s", "");
-//                    if (phoneNumber.matches("\\d{11}")) {
-//                        bt_nav_login.setEnabled(false);
-//                        bt_nav_login.setTextColor(getResources().getColor(R.color.cpb_white));
-//                        config.setPhone(phoneNumber);
-//                        et_phone.setCursorVisible(false);
-//                        bt_nav_login.setEnabled(false);
-//                        BLECommunication.sendPhone(config);
-//                        Toast.makeText(context, "验证码已发送，请耐心等待", Toast.LENGTH_SHORT).show();
-//                        countThread = new Thread(new Runnable() {
-//                            @Override
-//                            public void run() {
-//                                while (Clock.count > 0) {
-//                                    Message message = new Message();
-//                                    message.what = 1;
-//                                    mCount.sendMessage(message);
-//                                    try {
-//                                        Thread.sleep(1000);
-//                                    } catch (InterruptedException e) {
-//                                        e.printStackTrace();
-//                                    }
-//                                }
-//                            }
-//                        });
-//                        Clock.count = 61;
-//                        mCount = new Handler() {
-//                            public void handleMessage(Message msg) {
-//                                if (msg.what == 1) {
-//                                    Clock.count--;
-//                                    bt_nav_login.setText(Clock.count + " s");
-//                                    if (Clock.count <= 0) {
-//                                        bt_nav_login.setEnabled(true);
-//                                        bt_nav_login.setText("发送验证码");
-//                                    }
-//                                }
-//                                super.handleMessage(msg);
-//                            }
-//                        };
-//                        countThread.start();
-//                    } else {
-//                        Toast.makeText(context, "请输入11位手机格式！", Toast.LENGTH_SHORT).show();
-//                    }
-//                } else {
-//                    Toast.makeText(context, "请先连接蓝牙设备", Toast.LENGTH_SHORT).show();
-//                }
-//            }
-//        });
-//        et_username.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//                et_username.setCursorVisible(true);
-//            }
-//        });
-//        et_email.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//                et_email.setCursorVisible(true);
-//            }
-//        });
-//
-//        final Button bt_save = nav_header.findViewById(R.id.bt_save);
-//        bt_save.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//                username = et_username.getText().toString();
-//                email = et_email.getText().toString();
-//                username.replaceAll("\\s", "");
-//                email.replaceAll("\\s", "");
-//                et_username.setText(username);
-//                et_email.setText(email);
-//                if (email.matches("\\w+@\\w+.((com)|(cn)|(gov)|(net)|(org)|(com.cn)|(net.cn))")) {
-//                    et_email.setBackgroundResource(R.color.colorPrimary);
-//                    Toast.makeText(MainActivity.this, "保存成功!", Toast.LENGTH_LONG).show();
-//                    editor.putString("email", email);
-//                    editor.putString("username", username);
-//                    editor.apply();
-//
-//                    et_email.setCursorVisible(false);
-//                    et_username.setCursorVisible(false);
-//                } else {
-//                    email = "";
-//                    et_email.setBackgroundColor(Color.RED);
-//                    Toast.makeText(MainActivity.this, "请检查email的格式！", Toast.LENGTH_SHORT).show();
-//                }
-//            }
-//        });
+        //"注册菜单"
+        MenuItem homepage=navigationView.getMenu().findItem(R.id.nav_homepage);
+        homepage.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                //触发浏览器
+                Uri uri = Uri.parse("http://www.dhu.edu.cn");
+                Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+                startActivity(intent);
+                return true;
+            }
+        });
     }
 
     /**
-     * 初始化底部标签栏及滑动页面
+     *  侧滑菜单->相机的拍照结果进行分享
+     */
+    public void handleCameraCapture(){
+        Bitmap temp;
+        try {
+            //从缓存中获取拍照图片，将图片分享给其他应用
+            temp = BitmapFactory.decodeStream(getContentResolver().openInputStream(uri_capture));
+            Intent share_intent = new Intent();
+            share_intent.setAction(Intent.ACTION_SEND);//设置分享行为
+            share_intent.setType("image/*");  //设置分享内容的类型
+            share_intent.putExtra(Intent.EXTRA_TEXT, "我下载了智能无线传感器网络APP！很好玩哦！");
+            share_intent.putExtra(Intent.EXTRA_STREAM, uri_capture);
+            startActivity(Intent.createChooser(share_intent, getTitle()));
+        } catch (Exception e) {
+            Toast.makeText(this, "图片获取失败", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+
+    /**
+     * 初始化主视图标签页及滑动功能
      */
     public void createTabLayout() {
+        //初始化三个标签页
         fragment_1 = new Fragment_1();
         fragment_2 = new Fragment_2();
         fragment_3 = new Fragment_3();
@@ -515,16 +413,22 @@ public class MainActivity extends AppCompatActivity {
         FragmentAdapter fragmentAdapter = new FragmentAdapter(fragmentManager, fragmentList);
         viewPager.setAdapter(fragmentAdapter);
         tabLayout.setupWithViewPager(viewPager);
+
+        //初始化底部标签栏
         setTabs(tabLayout, this.getLayoutInflater(), new int[]{R.drawable.control, R.drawable.control, R.drawable.control});
+        //默认选中第一个标签页
         tabLayout.getTabAt(0).select();
     }
 
+    //初始化底部标签栏
     private void setTabs(TabLayout tabLayout, LayoutInflater inflater, int[] tabImgs) {
 
-        tabLayout.getTabAt(0).setIcon(R.drawable.tab_connect);
-        tabLayout.getTabAt(1).setIcon(R.drawable.tab_monitor);
-        tabLayout.getTabAt(2).setIcon(R.drawable.tab_control);
 
+//        tabLayout.getTabAt(0).setIcon(R.drawable.tab_connect);
+//        tabLayout.getTabAt(1).setIcon(R.drawable.tab_monitor);
+//        tabLayout.getTabAt(2).setIcon(R.drawable.tab_control);
+
+        //初始化底部标签页图标
         View view1 = getLayoutInflater().inflate(R.layout.tab_custom_connect, null);
         ImageView imageView1 = view1.findViewById(R.id.img_tab_connect);
         imageView1.setImageResource(R.drawable.tab_connect);
@@ -543,10 +447,16 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * 初始化浮动按钮
+     * 初始化浮动按钮，点击浮动按钮可以开关当前蓝牙连接。按钮在长按时进入拖动模式，可以改变按钮的位置。
      */
+
+
+    private Boolean isDrag = false;//true：按钮处于拖动模式
+
     public void createFloatingButton() {
         fab = findViewById(R.id.fab);
+
+        //点击事件用于蓝牙连接开关
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -556,11 +466,16 @@ public class MainActivity extends AppCompatActivity {
                         Toast.makeText(MainActivity.this, "没有设备可供连接", Toast.LENGTH_SHORT).show();
                     } else {
                         if (currentDevice.Switch) {
+                            //关闭蓝牙连接
                             currentDevice.Switch = false;
+                            //图标设置为断开
                             fab.setImageResource(R.drawable.fab_ble_disconnected);
                         } else {
+                            //打开蓝牙连接
                             currentDevice.Switch = true;
+                            //图标设置为连接
                             fab.setImageResource(R.drawable.fab_ble_connected);
+                            //开启蓝牙连接任务
                             beginBLELoop();
                         }
                     }
@@ -568,6 +483,8 @@ public class MainActivity extends AppCompatActivity {
                     isDrag = false;
             }
         });
+
+        //长按事件用于开启按钮拖动模式
         fab.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
@@ -575,6 +492,8 @@ public class MainActivity extends AppCompatActivity {
                 return false;
             }
         });
+
+        //触摸事件用于跟踪用户拖动位置
         fab.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
@@ -602,6 +521,20 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
+     * 初始化上方标题栏
+     */
+
+    public void createToolBar() {
+        toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+        ActionBar actionBar = getSupportActionBar();
+        if (actionBar != null) {
+            actionBar.setDisplayHomeAsUpEnabled(true);
+            actionBar.setHomeAsUpIndicator(R.mipmap.ic_menu);
+        }
+    }
+
+    /**
      * 初始化标题栏菜单
      *
      * @param menu 菜单
@@ -617,7 +550,7 @@ public class MainActivity extends AppCompatActivity {
         return true;
     }
 
-    //enable为true时，菜单添加图标有效，enable为false时无效。4.0系统默认无效
+    //enable为true时，菜单添加图标有效，enable为false时无效。
     private void setIconEnable(Menu menu, boolean enable) {
         try {
             Class<?> clazz = Class.forName("com.android.internal.view.menu.MenuBuilder");
@@ -638,22 +571,27 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == android.R.id.home) {
+            //左上方图标用于打开侧滑页面
             mDrawerLayout.openDrawer(GravityCompat.START);
         } else if ("扫描二维码".equals(item.getTitle())) {
-            if (PermissionHandler.checkPermission(this, new String[]{Manifest.permission.CAMERA}, REQUEST_FOR_PERMISSION)) {
+            //扫描二维码菜单
+            if (PermissionHandler.checkPermission(this, new String[]{Manifest.permission.CAMERA,Manifest.permission.BLUETOOTH}, REQUEST_FOR_PERMISSION)) {
                 startActivityForResult(new Intent(this, CaptureActivity.class), REQUEST_FOR_QR_RESULT);
             }
         } else if ("NFC".equals(item.getTitle())) {
-            if (PermissionHandler.checkPermission(this, new String[]{Manifest.permission.NFC}, REQUEST_FOR_PERMISSION)) {
+            //NFC菜单
+            if (PermissionHandler.checkPermission(this, new String[]{Manifest.permission.NFC,Manifest.permission.BLUETOOTH}, REQUEST_FOR_PERMISSION)) {
                 Intent NFCIntent = new Intent(this, ReadTextActivity.class);
                 NFCIntent.putExtra("source", SOURCE_ACTIVITY);
                 startActivityForResult(NFCIntent, REQUEST_FOR_NFC_RESULT);
             }
         } else if ("蓝牙连接".equals(item.getTitle())) {
+            //蓝牙连接菜单
             if (PermissionHandler.checkPermission(this, new String[]{Manifest.permission.BLUETOOTH}, REQUEST_FOR_PERMISSION)) {
                 startActivityForResult(new Intent(this, BLEActivity.class), REQUEST_FOR_BLE_SCAN_RESULT);
             }
-        } else if ("WriteNFC".equals(item.getTitle())) {
+        } else if ("格式化NFC".equals(item.getTitle())) {
+            //格式化NFC菜单
             if (PermissionHandler.checkPermission(MainActivity.this, new String[]{Manifest.permission.NFC}, REQUEST_FOR_PERMISSION)) {
                 startActivity(new Intent(this, WriteTextActivity.class));
             }
@@ -663,15 +601,17 @@ public class MainActivity extends AppCompatActivity {
 
 
     /**
-     * 取得二维码扫描结果
+     * 获取从该页面打开的所有页面返回的结果
      *
-     * @param requestCode 申请码
+     * @param requestCode 请求码
      * @param resultCode  结果码
      * @param data        扫描结果
      */
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         switch (requestCode) {
+
+            //获取二维码扫描的结果
             case REQUEST_FOR_QR_RESULT:
                 if (resultCode == Activity.RESULT_OK) {
                     String MACAddress = data.getExtras().getString("result");
@@ -689,6 +629,7 @@ public class MainActivity extends AppCompatActivity {
                     Toast.makeText(context, "二维码扫描失败", Toast.LENGTH_SHORT).show();
                 }
                 break;
+            //获取NFC扫描的结果
             case REQUEST_FOR_NFC_RESULT:
                 if (resultCode == Activity.RESULT_OK) {
                     beginBLELoop();
@@ -696,6 +637,8 @@ public class MainActivity extends AppCompatActivity {
                     Toast.makeText(context, "NFC获取数据失败", Toast.LENGTH_SHORT).show();
                 }
                 break;
+
+            //获取蓝牙扫描的结果
             case REQUEST_FOR_BLE_SCAN_RESULT:
                 if (resultCode == Activity.RESULT_OK) {
                     beginBLELoop();
@@ -703,6 +646,8 @@ public class MainActivity extends AppCompatActivity {
                     Toast.makeText(context, "BLE设备获取失败", Toast.LENGTH_SHORT).show();
                 }
                 break;
+
+            //获取头像设置调用相机拍照的结果
             case TAKE_PHOTO_FOR_HEAD_ICON:
                 if (resultCode == RESULT_OK) {
                     createHeadIcon(true, true);
@@ -711,6 +656,7 @@ public class MainActivity extends AppCompatActivity {
                 }
                 break;
 
+            //获取侧滑页面相机菜单的拍照结果
             case TAKE_PHOTO_FOR_SHARE:
                 if(resultCode==RESULT_OK){
                     handleCameraCapture();
@@ -719,6 +665,7 @@ public class MainActivity extends AppCompatActivity {
                 }
                 break;
 
+            //获取头像设置调用相册的结果
             case OPEN_ALBUM_FOR_HEAD_ICON:
                 if (resultCode == RESULT_OK) {
                     Uri albumUrl = data.getData();
@@ -738,7 +685,10 @@ public class MainActivity extends AppCompatActivity {
                     Toast.makeText(this, "获取失败", Toast.LENGTH_SHORT).show();
                 }
                 break;
+
+            //获取打开登陆页面返回的结果
             case REQUEST_FOR_LOGIN:
+                //登陆成功
                 if(resultCode==RESULT_OK){
                     bt_nav_login.setVisibility(View.INVISIBLE);
                     bt_delogin.setVisibility(View.VISIBLE);
@@ -749,96 +699,63 @@ public class MainActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
     }
 
-    /**
-     * 处理权限申请结果
-     *
-     * @param permissions 多个权限
-     * @Return Boolean  所有权限通过才返回true，否则返回false
-     */
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        switch (requestCode) {
-            case REQUEST_FOR_PERMISSION:
-                if (checkSelfPermission(Manifest.permission.READ_PHONE_STATE) == PackageManager.PERMISSION_GRANTED) {
-//                        getPhoneInfo();
-//                        SmsManager.getDefault().sendTextMessage(MySMS.SERVERPHONE,
-//                                null, "register", null, null);
-                }
-//                for (int grantResult : grantResults) {
-//                    if (grantResult != PackageManager.PERMISSION_GRANTED) {
-////                        Toast.makeText(this, "你拒绝了权限！", Toast.LENGTH_SHORT).show();
-//                        return;
-//                    }
-//                    Toast.makeText(this, "权限申请成功！", Toast.LENGTH_SHORT).show();
+//    /**
+//     * 处理权限申请结果
+//     *
+//     * @param permissions 多个权限
+//     * @Return Boolean  所有权限通过才返回true，否则返回false
+//     */
+//    @Override
+//    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+//        switch (requestCode) {
+//            case REQUEST_FOR_PERMISSION:
+//                if (checkSelfPermission(Manifest.permission.READ_PHONE_STATE) == PackageManager.PERMISSION_GRANTED) {
+////                        getPhoneInfo();
+////                        SmsManager.getDefault().sendTextMessage(MySMS.SERVERPHONE,
+////                                null, "register", null, null);
 //                }
-                break;
-            case REQUEST_FOR_PERMISSION_PHONE:
-                if (grantResults.length>0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    getPhoneInfo();
-                    return;
-                }
-                break;
-            default:
-        }
-    }
+////                for (int grantResult : grantResults) {
+////                    if (grantResult != PackageManager.PERMISSION_GRANTED) {
+//////                        Toast.makeText(this, "你拒绝了权限！", Toast.LENGTH_SHORT).show();
+////                        return;
+////                    }
+////                    Toast.makeText(this, "权限申请成功！", Toast.LENGTH_SHORT).show();
+////                }
+//                break;
+////            case REQUEST_FOR_PERMISSION_PHONE:
+////                if (grantResults.length>0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+////                    getPhoneInfo();
+////                    return;
+////                }
+////                break;
+////            default:
+//        }
+//    }
 
-    private void getPhoneInfo(){
-        try {
-            TelephonyManager tm = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
-            String imei = tm.getDeviceId();
-            if (imei != null)
-                config.setIMEI(imei);
-        }catch (SecurityException e){}
-    }
-
-
-    public BluetoothLeService mBluetoothLeService;
-
-    private static IntentFilter makeGattUpdateIntentFilter() {
-        final IntentFilter intentFilter = new IntentFilter();
-        intentFilter.addAction(BluetoothLeService.ACTION_GATT_CONNECTED);
-        intentFilter.addAction(BluetoothLeService.ACTION_GATT_DISCONNECTED);
-        intentFilter.addAction(BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED);
-        intentFilter.addAction(BluetoothLeService.ACTION_DATA_AVAILABLE);
-        intentFilter.addAction(BluetoothDevice.ACTION_UUID);
-        return intentFilter;
-    }
-
-    // 蓝牙连接服务
-    public final ServiceConnection mServiceConnection = new ServiceConnection() {
-        @Override
-        public void onServiceConnected(ComponentName componentName, IBinder service) {
-            mBluetoothLeService = ((BluetoothLeService.LocalBinder) service).getService();
-            if (!mBluetoothLeService.initialize())
-                MyLog.e(MyLog.TAG, "Unable to initialize Bluetooth");
-            else
-                MyLog.i(MyLog.TAG, "mBluetoothLeService is okay");
-            if (sourceIntent != null) {
-                String NFCResult = sourceIntent.getStringExtra(ReadTextActivity.EXTRA_NFCRESULT);
-                MyLog.i(MyLog.TAG, "NFCResult:" + NFCResult);
-                if (NFCResult != null) {
-                    beginBLELoop();
-                }
-            }
-            // Automatically connects to the device upon successful start-up initialization.
-            //mBluetoothLeService.connect(mDeviceAddress);
-        }
-
-        @Override
-        public void onServiceDisconnected(ComponentName componentName) {
-            mBluetoothLeService = null;
-        }
-    };
+//    private void getPhoneInfo(){
+//        try {
+//            TelephonyManager tm = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
+//            String imei = tm.getDeviceId();
+//            if (imei != null)
+//                config.setIMEI(imei);
+//        }catch (SecurityException e){}
+//    }
 
 
-     Handler updateUIHandler =null ;
 
     /**
-     * 开始BLE轮询（详见BLECommunication类）:
-     * BLE轮询开始后，以固定周期(BLELoopPeriod)与BLE设备进行短暂连接，100ms后自动断开。
+     * 开始BLE会话任务（详见BLECommunication类）:
+     * BLE会话开始后，以固定周期(BLELoopPeriod)与BLE设备进行短暂连接，100ms后自动断开。
      */
+
+    Handler updateUIHandler =null ;
+
     public void beginBLELoop() {
         final BLEDeviceInfo currentDevice = BLEDeviceManager.getCurrentBLEDevice();
+        if(!AccountManager.getLoginStatus()){
+            Toast.makeText(this,"请先登陆！",Toast.LENGTH_LONG).show();
+            return;
+        }
         currentDevice.Switch = true;
         fab.setImageResource(R.drawable.fab_ble_connected);
         deviceListUpdate();
@@ -887,6 +804,36 @@ public class MainActivity extends AppCompatActivity {
         }).start();
     }
 
+    //蓝牙BLE服务BluetoothLeService绑定
+    public BluetoothLeService mBluetoothLeService;
+    public final ServiceConnection mServiceConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName componentName, IBinder service) {
+            mBluetoothLeService = ((BluetoothLeService.LocalBinder) service).getService();
+            if (!mBluetoothLeService.initialize())
+                MyLog.e(MyLog.TAG, "Unable to initialize Bluetooth");
+            else
+                MyLog.i(MyLog.TAG, "mBluetoothLeService is okay");
+            if (sourceIntent != null) {
+                String NFCResult = sourceIntent.getStringExtra(ReadTextActivity.EXTRA_NFCRESULT);
+                MyLog.i(MyLog.TAG, "NFCResult:" + NFCResult);
+                if (NFCResult != null) {
+                    beginBLELoop();
+                }
+            }
+            // Automatically connects to the device upon successful start-up initialization.
+            //mBluetoothLeService.connect(mDeviceAddress);
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName componentName) {
+            mBluetoothLeService = null;
+        }
+    };
+
+
+
+
 // Handles various events fired by the Service.
 // ACTION_GATT_CONNECTED: connected to a GATT server.
 // ACTION_GATT_DISCONNECTED: disconnected from a GATT server.
@@ -894,6 +841,16 @@ public class MainActivity extends AppCompatActivity {
 // ACTION_DATA_AVAILABLE: received data from the device. This can be a
 // result of read or notification operations.
 
+    //注册蓝牙连接、断开、发现蓝牙服务、新数据等广播通知
+    private static IntentFilter makeGattUpdateIntentFilter() {
+        final IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(BluetoothLeService.ACTION_GATT_CONNECTED);
+        intentFilter.addAction(BluetoothLeService.ACTION_GATT_DISCONNECTED);
+        intentFilter.addAction(BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED);
+        intentFilter.addAction(BluetoothLeService.ACTION_DATA_AVAILABLE);
+        intentFilter.addAction(BluetoothDevice.ACTION_UUID);
+        return intentFilter;
+    }
 
     /**
      * @var hasReiceved: true:本次连接已经一次传感器数据。否则:false
@@ -964,7 +921,7 @@ public class MainActivity extends AppCompatActivity {
                                     mBluetoothLeService.disconnect();
                                 }
                             }
-                        }, 300); //100ms强制断开
+                        }, 100); //100ms强制断开
                     }
                 }).start();
             }
@@ -987,7 +944,7 @@ public class MainActivity extends AppCompatActivity {
     };
 
     /**
-     * 设备列表更新
+     * 蓝牙设备列表更新
      */
     public void deviceListUpdate() {
         MyLog.i(MyLog.TAG, "deviceListUpdate");

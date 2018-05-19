@@ -40,6 +40,7 @@ import com.xys.libzxing.zxing.activity.CaptureActivity;
  */
 public class Fragment_1 extends Fragment {
 
+    //请求码
     private final static String SOURCE_ACTIVITY = Fragment_1.class.getName();
     public final static int REQUEST_FOR_PERMISSION = 0;
     public final static int REQUEST_FOR_QR_RESULT = 1;
@@ -47,12 +48,16 @@ public class Fragment_1 extends Fragment {
     public final static int REQUEST_FOR_BLE_SCAN_RESULT = 3;
 
     private Context context;
+    //上方三个图片按钮：NFC、二维码、蓝牙
     private ImageButton bt_nfc;
     private ImageButton bt_qr;
     private ImageButton bt_ble;
     private ListView deviceListView;
     public DeviceListAdapter deviceListAdapter;
 
+    /**
+     *  初始化蓝牙连接
+     */
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -63,7 +68,6 @@ public class Fragment_1 extends Fragment {
         bt_nfc.setOnClickListener(onClickListener);
         bt_qr.setOnClickListener(onClickListener);
         bt_ble.setOnClickListener(onClickListener);
-
         deviceListView = view.findViewById(R.id.device_list);
         deviceListAdapter = new DeviceListAdapter(getActivity(), BLEDeviceManager.deviceList);
         deviceListView.setAdapter(deviceListAdapter);
@@ -71,13 +75,15 @@ public class Fragment_1 extends Fragment {
         return view;
     }
 
+
     private BluetoothAdapter bluetoothAdapter;
     private BluetoothManager bluetoothManager;
 
+    //页面点击事件
     private View.OnClickListener onClickListener = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
-            Boolean isReadyToConnect;
+            Boolean isReadyToConnect;//true：蓝牙相关权限与设置已就绪
             //检查蓝牙、GPS权限
             isReadyToConnect = PermissionHandler.checkPermission(getActivity(),
                     new String[]{Manifest.permission.ACCESS_COARSE_LOCATION,
@@ -85,42 +91,55 @@ public class Fragment_1 extends Fragment {
 
             bluetoothManager = (BluetoothManager) getActivity().getSystemService(Context.BLUETOOTH_SERVICE);
             bluetoothAdapter = bluetoothManager.getAdapter();
-            // 打开蓝牙
+            // 检测蓝牙功能是否开启
             if (bluetoothAdapter == null || !bluetoothAdapter.isEnabled()) {
+                //跳转蓝牙设置页面
                 Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
                 startActivityForResult(enableBtIntent, 0);
                 isReadyToConnect = false;
             }
-            //打开GPS
+            //检测GPS权限
             if(PermissionHandler.checkPermission(getActivity(), new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_FOR_PERMISSION))
             {
                 LocationManager locationManager = (LocationManager) getActivity().getSystemService(Context.LOCATION_SERVICE);
                 boolean networkProvider = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
                 boolean gpsProvider = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
+                //检测GPS功能是否开启
                 if (networkProvider || gpsProvider) ;
                 else {
+                    //跳转GPS设置页面
                     Toast.makeText(getActivity(), "BLE蓝牙连接需要打开GPS!", Toast.LENGTH_LONG).show();
                     Intent locationIntent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
                     Fragment_1.this.startActivityForResult(locationIntent, 1);
                     isReadyToConnect = false;
                 }
             }
+
             if (isReadyToConnect) {
+                //蓝牙相关权限与设置已就绪
                 switch (v.getId()) {
                     case R.id.bt_NFC:
+                        //点击NFC图标
+                        //检查NFC权限
                         if (PermissionHandler.checkPermission(Fragment_1.this, new String[]{Manifest.permission.NFC}, REQUEST_FOR_PERMISSION)) {
+                            //权限申请成功，跳转NFC扫描页面
                             Intent NFCIntent = new Intent(getActivity(), ReadTextActivity.class);
                             NFCIntent.putExtra("source", SOURCE_ACTIVITY);
                             Fragment_1.this.startActivityForResult(NFCIntent, REQUEST_FOR_NFC_RESULT);
                         }
                         break;
                     case R.id.bt_QR:
+                        //点击二维码图标
+                        //检查相机权限
                         if (PermissionHandler.checkPermission(Fragment_1.this, new String[]{Manifest.permission.CAMERA}, REQUEST_FOR_PERMISSION)) {
+                            //权限申请成功，跳转二维码扫描页面
                             Fragment_1.this.startActivityForResult(new Intent(getActivity(), CaptureActivity.class), REQUEST_FOR_QR_RESULT);
                         }
                         break;
                     case R.id.bt_BLE:
+                        //点击蓝牙图标
                         if (PermissionHandler.checkPermission(Fragment_1.this, new String[]{Manifest.permission.BLUETOOTH}, REQUEST_FOR_PERMISSION)) {
+                            //权限申请成功，跳转蓝牙扫描界面
                             Fragment_1.this.startActivityForResult(new Intent(getActivity(), BLEActivity.class), REQUEST_FOR_BLE_SCAN_RESULT);
                         }
                         break;
@@ -151,9 +170,9 @@ public class Fragment_1 extends Fragment {
     }
 
     /**
-     * 取得二维码扫描结果
+     * NFC扫描、二维码扫描、蓝牙扫描结果处理
      *
-     * @param requestCode 申请码
+     * @param requestCode 请求码
      * @param resultCode  结果码
      * @param data        扫描结果
      */
@@ -161,7 +180,10 @@ public class Fragment_1 extends Fragment {
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         switch (requestCode) {
             case REQUEST_FOR_QR_RESULT:
+                //二维码扫描结果
                 if (resultCode == Activity.RESULT_OK) {
+                    //成功扫描
+                    //获取扫描结果中的蓝牙地址
                     String MACAddress = data.getExtras().getString("result");
                     if(MACAddress!=null&&MACAddress.startsWith(WriteTextActivity.prefix)) {
                         MACAddress = MACAddress.replace(WriteTextActivity.prefix, "");
@@ -169,6 +191,7 @@ public class Fragment_1 extends Fragment {
                         BLEDeviceManager.setCurrentBLEDevice(MACAddress);
                         MyLog.i(MyLog.TAG, MACAddress);
                         Toast.makeText(context, BLEDeviceManager.getCurrentBLEDevice().MACAddress, Toast.LENGTH_SHORT).show();
+                        //开启蓝牙连接任务
                         ((MainActivity) getActivity()).beginBLELoop();
                     }else{
                         Toast.makeText(context, "无效的二维码", Toast.LENGTH_SHORT).show();
@@ -178,14 +201,18 @@ public class Fragment_1 extends Fragment {
                 }
                 break;
             case REQUEST_FOR_NFC_RESULT:
+                //NFC扫描结果（在NFC扫描页面已经将地址写入当前BLEDeviceManager）
                 if (resultCode == Activity.RESULT_OK) {
+                    //开启蓝牙连接任务
                     ((MainActivity) getActivity()).beginBLELoop();
                 } else {
                     Toast.makeText(context, "NFC获取数据失败", Toast.LENGTH_SHORT).show();
                 }
                 break;
             case REQUEST_FOR_BLE_SCAN_RESULT:
+                //蓝牙扫描结果（在蓝牙扫描页面已经将地址写入当前BLEDeviceManager）
                 if (resultCode == Activity.RESULT_OK) {
+                    //开启蓝牙连接任务
                     ((MainActivity) getActivity()).beginBLELoop();
                 } else {
                     Toast.makeText(context, "BLE设备获取失败", Toast.LENGTH_SHORT).show();

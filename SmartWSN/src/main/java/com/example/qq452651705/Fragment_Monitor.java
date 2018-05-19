@@ -17,7 +17,10 @@ import com.example.qq452651705.Global.MyLog;
 import com.example.qq452651705.Graph.LineChartFactory;
 import com.example.qq452651705.Sensor.SensorData;
 import com.github.mikephil.charting.charts.LineChart;
+import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
+
+import java.util.List;
 
 import static android.view.View.GONE;
 import static com.example.qq452651705.Graph.LineChartFactory.CHART_WIND;
@@ -29,6 +32,7 @@ import static com.example.qq452651705.Sensor.SensorData.SENSOR_FAN;
 import static com.example.qq452651705.Sensor.SensorData.SENSOR_HUMIDTY;
 import static com.example.qq452651705.Sensor.SensorData.SENSOR_LIGHT;
 import static com.example.qq452651705.Sensor.SensorData.SENSOR_TEMPERATURE;
+import static com.example.qq452651705.Sensor.SensorData.SENSOR_WINDDIR;
 
 public class Fragment_Monitor extends Fragment {
     public int chartID;
@@ -38,17 +42,18 @@ public class Fragment_Monitor extends Fragment {
     private ViewGroup graph_detail;
     private TextView textView_max_temp;
     private TextView textView_max_hum;
-    private TextView textView_max_co2;
+    private TextView textView_max_wind;
     private TextView textView_max_light;
     private TextView textView_min_temp;
     private TextView textView_min_hum;
-    private TextView textView_min_co2;
+    private TextView textView_min_wind;
     private TextView textView_min_light;
     private TextView textView_avr_temp;
     private TextView textView_avr_humid;
-    private TextView textView_avr_co2;
+    private TextView textView_avr_wind;
     private TextView textView_avr_light;
     private TextView textView_avr_fanspeed;
+    private TextView textView_wind_direction;
 
     private SensorData data = SensorData.getSensorData();
     private LocalBroadcastManager localBroadcastManager;
@@ -109,13 +114,36 @@ public class Fragment_Monitor extends Fragment {
         bt_clearAll.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                textView_max_temp.setText("");
-                textView_min_temp.setText("");
-                textView_max_hum.setText("");
-                textView_min_hum.setText("");
+
+                switch (chartID) {
+                    case CHART_TEMPERATURE_AND_HUMIDITY: {
+                        textView_max_temp.setText("");
+                        textView_max_hum.setText("");
+                        textView_min_temp.setText("");
+                        textView_min_hum.setText("");
+                        textView_avr_temp.setText("");
+                        textView_avr_humid.setText("");
+                    }
+                    break;
+                    case CHART_WIND: {
+                        textView_max_wind.setText("");
+                        textView_min_wind.setText("");
+                        textView_avr_wind.setText("");
+                    }
+                    break;
+                    case CHART_LIGHT: {
+                        textView_max_light.setText("");
+                        textView_min_light.setText("");
+                        textView_avr_light.setText("");
+                    }
+                    break;
+                }
 //                bt_start.setEnabled(true);
                 SensorData.getSensorData().clearData(SENSOR_HUMIDTY);
                 SensorData.getSensorData().clearData(SENSOR_TEMPERATURE);
+                SensorData.getSensorData().clearData(SENSOR_LIGHT);
+                SensorData.getSensorData().clearData(SENSOR_WINDDIR);
+                SensorData.getSensorData().clearData(SENSOR_WIND);
                 lineData.notifyDataChanged();
                 linechart.invalidate();
             }
@@ -155,18 +183,18 @@ public class Fragment_Monitor extends Fragment {
             }
             break;
             case CHART_WIND: {
-                textView.setText("最大CO2浓度:");
-                textView2.setText("最小CO2浓度:");
-                textView3.setVisibility(GONE);
+                textView.setText("最大风速:");
+                textView2.setText("最小风速:");
+                textView3.setText("当前风向：");
                 textView4.setVisibility(GONE);
                 avr2_text.setVisibility(GONE);
-                textView_max_co2 = view.findViewById(R.id.max_temp);
-                textView_min_co2 = view.findViewById(R.id.min_temp);
-                textView_avr_co2 = view.findViewById(R.id.avr1);
-                view.findViewById(R.id.max_hum).setVisibility(GONE);
+                textView_max_wind = view.findViewById(R.id.max_temp);
+                textView_min_wind = view.findViewById(R.id.min_temp);
+                textView_avr_wind = view.findViewById(R.id.avr1);
+                textView_wind_direction=view.findViewById(R.id.max_hum);
                 view.findViewById(R.id.min_hum).setVisibility(GONE);
                 view.findViewById(R.id.avr2).setVisibility(GONE);
-                avr1_text.setText("平均CO2浓度:");
+                avr1_text.setText("平均风速:");
             }
             break;
             case CHART_LIGHT: {
@@ -219,9 +247,13 @@ public class Fragment_Monitor extends Fragment {
                     }
                     break;
                     case CHART_WIND: {
-                        textView_max_co2.setText(data.getSensorDataMax(SENSOR_WIND));
-                        textView_min_co2.setText(data.getSensorDataMin(SENSOR_WIND));
-                        textView_avr_co2.setText(data.getSensorDataAvr(SENSOR_WIND).toString());
+                        textView_max_wind.setText(data.getSensorDataMax(SENSOR_WIND));
+                        textView_min_wind.setText(data.getSensorDataMin(SENSOR_WIND));
+                        textView_avr_wind.setText(data.getSensorDataAvr(SENSOR_WIND).toString());
+                        try {
+                            List<Entry> entryList = data.getSensorDataEntryList(SENSOR_WINDDIR);
+                            textView_wind_direction.setText(entryList.get(entryList.size() - 1).getY()+"");
+                        }catch (Exception e){}
                     }
                     break;
                     case CHART_LIGHT: {

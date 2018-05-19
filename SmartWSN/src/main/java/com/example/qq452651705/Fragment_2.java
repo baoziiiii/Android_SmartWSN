@@ -43,7 +43,7 @@ public class Fragment_2 extends Fragment {
     private FragmentTransaction fragmentTransaction;
     private FragmentManager fragmentManager;
     private Bundle bundle = new Bundle();
-
+    
     private List<RecyclerViewData> mDatas;
     private RecyclerView mRecyclerview;
     private SensorsAdapter adapter;
@@ -89,7 +89,7 @@ public class Fragment_2 extends Fragment {
         fragmentTransaction.commit();
 
         /**
-         * 顶部菜单初始化
+         * 顶部传感器列表初始化
          */
         linearLayoutManager = new LinearLayoutManager(getActivity());
         linearLayoutManager.setOrientation(LinearLayoutManager.VERTICAL);

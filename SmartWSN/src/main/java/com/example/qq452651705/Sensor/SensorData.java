@@ -40,10 +40,11 @@ public class SensorData {
 
     public final static int SENSOR_TEMPERATURE = 0;
     public final static int SENSOR_HUMIDTY = 1;
-    public final static int SENSOR_WIND = 2;
-    public final static int SENSOR_LIGHT = 3;
-    public final static int SENSOR_FAN = 4;
-    public final static int SENSOR_PUMP = 5;
+    public final static int SENSOR_WIND = 3;
+    public final static int SENSOR_LIGHT = 2;
+    public final static int SENSOR_FAN = 5;
+    public final static int SENSOR_PUMP = 6;
+    public final static int SENSOR_WINDDIR=4;
 
     /**
      * 传感器名称表。
@@ -126,6 +127,11 @@ public class SensorData {
     }
 
     public static SensorData getSensorData() {
+        sensorData.enableSensor(SENSOR_WINDDIR);
+        sensorData.enableSensor(SENSOR_TEMPERATURE);
+        sensorData.enableSensor(SENSOR_HUMIDTY);
+        sensorData.enableSensor(SENSOR_WIND);
+        sensorData.enableSensor(SENSOR_LIGHT);
         return sensorData;
     }
 
