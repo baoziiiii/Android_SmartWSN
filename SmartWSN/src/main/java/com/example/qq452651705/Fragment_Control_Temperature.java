@@ -25,7 +25,7 @@ import static com.example.qq452651705.Sensor.SensorData.SENSOR_HUMIDTY;
 import static com.example.qq452651705.Sensor.SensorData.SENSOR_TEMPERATURE;
 
 /**
- * Created by B on 2018/2/23.
+ * Created by B on 2018/2/23. 温控视图
  */
 
 public class Fragment_Control_Temperature extends Fragment {
@@ -48,15 +48,20 @@ public class Fragment_Control_Temperature extends Fragment {
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_3_controltemperature, null);
         ViewGroup temperature_graph_parent = view.findViewById(R.id.fragment_3_controltemperature_RL_1);
+        data.enableSensor(SENSOR_TEMPERATURE);
+
+        //初始化"温度"图表
         graph_groupview = inflater.inflate(R.layout.graph_groupview, temperature_graph_parent);
         chart_temperature = view.findViewById(R.id.linechart);
-        data.enableSensor(SENSOR_TEMPERATURE);
         tempLineChartFactory = new LineChartFactory(getActivity(), chart_temperature, LineChartFactory.CHART_TEMPERATURE_CONTROL, SENSOR_TEMPERATURE);
         tempLineData = tempLineChartFactory.getLineData();
         chart_temperature = tempLineChartFactory.getLineChart();
         chart_temperature.invalidate();
+
+        //初始化"设定温度"文本框
         settemperature_textview = view.findViewById(R.id.settemperature_textView);
         settemperature = view.findViewById(R.id.settemperature);
+        //"设定温度"按钮点击事件
         settemperature.setOnClickListener(new View.OnClickListener() {
 
 
@@ -64,17 +69,19 @@ public class Fragment_Control_Temperature extends Fragment {
             @Override
             public void onClick(View v) {
                 try {
+                    //通知节点用户设定的温度
                     TemperatureControl temperatureControl = TemperatureControl.getTemperatureControl();
                     Float desiredTemp = Float.parseFloat(settemperature_textview.getText().toString());
                     temperatureControl.setTemperature
                             (desiredTemp);
                     BLECommunication.controlSensor(temperatureControl);
+
+                    //图表中插入控温线
                     yLimitLine = new LimitLine(desiredTemp,"控温线:"+desiredTemp+"°C");
                     yLimitLine.setLineColor(Color.RED);
                     yLimitLine.setTextColor(Color.RED);
                     yLimitLine.setLineWidth(7f);
                     yLimitLine.setTextSize(20f);
-                    // 获得左侧侧坐标轴
                     YAxis leftAxis = chart_temperature.getAxisLeft();
                     Float yMin=Float.parseFloat(SensorData.getSensorDataMin(SENSOR_TEMPERATURE));
                     if(desiredTemp<yMin) {
@@ -82,49 +89,60 @@ public class Fragment_Control_Temperature extends Fragment {
                     }
                     leftAxis.removeAllLimitLines();
                     leftAxis.addLimitLine(yLimitLine);
+
                 } catch (NumberFormatException e) {
+                    //用户输入非数字，报错。
                     Toast.makeText(getActivity(), "请输入数字！", Toast.LENGTH_SHORT).show();
                 }
             }
         });
 
-        //初始化图表按键
+        //初始化图表下方"总览""清空""复位"按键
         CircularProgressButton bt_fitAll = temperature_graph_parent.findViewById(R.id.fitAll);
+        //总览点击事件
         bt_fitAll.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                //图表总览
                 chart_temperature.fitScreen();
                 tempLineData.setDrawValues(false);
                 chart_temperature.invalidate();
             }
         });
         CircularProgressButton bt_clearAll = temperature_graph_parent.findViewById(R.id.clear);
+        //复位点击事件
         bt_clearAll.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                //图表清空
                 SensorData.getSensorData().clearData(SENSOR_HUMIDTY);
                 SensorData.getSensorData().clearData(SENSOR_TEMPERATURE);
                 tempLineData.notifyDataChanged();
                 chart_temperature.invalidate();
             }
         });
+        //复位点击事件
         CircularProgressButton bt_setPortView = temperature_graph_parent.findViewById(R.id.resetView);
         bt_setPortView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                //图表复位
                 tempLineChartFactory.setViewPort();
             }
         });
 
-        //初始化风扇图表
+        //初始化风扇档位输入框
         setfanspeed_textview = view.findViewById(R.id.fanspeed);
         setFanSpeed = view.findViewById(R.id.setfanspeed);
+        //"设定风扇档位"按钮点击事件
         setFanSpeed.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 try {
+                    //将风扇档位通知节点
                     TemperatureControl temperatureControl = TemperatureControl.getTemperatureControl();
                     Integer gear = Integer.parseInt(setfanspeed_textview.getText().toString());
+                    //档位0～10
                     if (gear > 10) {
                         gear = 10;
                         setfanspeed_textview.setText(gear.toString());
@@ -132,6 +150,7 @@ public class Fragment_Control_Temperature extends Fragment {
                     temperatureControl.setFanSpeed(gear);
                     BLECommunication.controlSensor(temperatureControl);
                 } catch (NumberFormatException e) {
+                    //用户输入不在0～10，报错
                     Toast.makeText(getActivity(), "请输入数字0~10！", Toast.LENGTH_SHORT).show();
                 }
             }
@@ -143,7 +162,6 @@ public class Fragment_Control_Temperature extends Fragment {
 //        fanLineData = fanLineChartFactory.getLineData();
 //        chart_fanspeed = fanLineChartFactory.getLineChart();
 //        chart_fanspeed.invalidate();
-
         return view;
     }
 }
