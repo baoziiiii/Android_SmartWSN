@@ -14,7 +14,7 @@ import com.example.qq452651705.Sensor.SensorData;
 import com.github.mikephil.charting.data.LineData;
 
 /**
- * Created by B on 2018/2/24.
+ * Created by B on 2018/2/24.湿控视图
  */
 
 public class Fragment_Control_Humidity extends Fragment {
@@ -22,27 +22,39 @@ public class Fragment_Control_Humidity extends Fragment {
     private LineData fanLineData;
     private LineChartFactory fanLineChartFactory;
 
+    //开启水泵按钮
+    private CircularProgressButton pump_on;
+
+    //关闭水泵按钮
+    private CircularProgressButton pump_off;
+    private HumidityControl humidityControl;
+
+
+    //按钮点击事件
     private View.OnClickListener onClickListener=new View.OnClickListener() {
         @Override
         public void onClick(View v) {
             if(v.getId()==pump_on.getId()){
+
+                //通知节点打开水泵
                 humidityControl.switchPumpStatus(HumidityControl.PUMP_ON);
 
             }else if(v.getId()==pump_off.getId()){
+                
+
+                //通知节点关闭水泵
                 humidityControl.switchPumpStatus(HumidityControl.PUMP_OFF);
             }
         }
     };
-    private CircularProgressButton pump_on;
-    private CircularProgressButton pump_off;
-    private HumidityControl humidityControl;
-
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, Bundle savedInstanceState) {
 
         View view=inflater.inflate(R.layout.fragment_3_controlhumidity, null);
         humidityControl = HumidityControl.getHumidityControl();
+
+        //按钮点击事件
         pump_on = view.findViewById(R.id.pump_on);
         pump_off = view.findViewById(R.id.pump_off);
         pump_on.setOnClickListener(onClickListener);
